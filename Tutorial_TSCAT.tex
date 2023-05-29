@@ -1,4 +1,4 @@
-\documentclass[showpacs,aps,prl,onecolumn,superscriptaddress]{revtex4-1}
+\documentclass[aps,prl,10pt,onecolumn,superscriptaddress]{revtex4-2}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Packages
@@ -7,18 +7,18 @@
 \usepackage[english]{babel}
 \usepackage[pdftex]{graphicx}
 \usepackage{hyperref}
-\usepackage{epsfig}
+%\usepackage{epsfig}
 \usepackage{color}
-\usepackage{psfrag}
+%\usepackage{psfrag}
 \usepackage{float}
-\usepackage{bbold}
-\usepackage{tikz}
+%\usepackage{bbold}
+%\usepackage{tikz}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{footnote}
-\usepackage{siunitx}
+%\usepackage{footnote}
+%\usepackage{siunitx}
 \usepackage{listings}
-\usepackage{minted}
+%\usepackage{minted}
 
 
 \newcommand{\addcomm}[1]{\textcolor{orange}{#1}}
@@ -174,7 +174,7 @@ scatTOT.append([t1_right, t1_left, r1_right, r1_left])
 \end{lstlisting}
 
 \subsection{Multilayers for Standard FP}
-The next script shows the multilayer structure for a standard FP cavity, where the oscillator strength of the LHIC medium (denoted as CHIRAL MATERIAL in the code) defined as $\omega_{p}\sqrt{f}$ is varied. Note the structure of the list called $\mathbf{matTOT}$. This list changes in case of a standard or alternative (in this work preserving) FP cavity. At the end of the script, the computed observables are shown: $\mathbf{Tsp}$ ($T^{\rightarrow}_{+}$ for light propagation from right to left), $\mathbf{Tsm}$ ($T^{\rightarrow}_{-}$), $\mathbf{Rsp}$ ($R^{\leftarrow}_{+}$ for light propagation from right to left), $\mathbf{Rsm}$ ($R^{\leftarrow}_{-}$) and $\mathbf{dct\_s}$ ($\mathcal{DCT}$ for light propagation from right to left). In case the user is interested in computing the same observables but for the opposite light propagation has to type $\mathbf{Tdp}$, $\mathbf{Tdm}$, $\mathbf{Rdp}$, $\mathbf{Rdm}$ or $\mathbf{dct\_d}$ respectively. The user can also type $\mathbf{dcr\_s}$ ($\mathcal{DCR}$ for light propagation from left to right) or $\mathbf{dcr\_d}$ ($\mathcal{DCR}$ for light propagation from right to left). The letter s stands for sinister (latin word to say ``on the left-side") and d stands for dexter (latin word to say ``on the right-side").
+The next script shows the multilayer structure for a standard FP cavity, where the oscillator strength of the LHIC medium (denoted as CHIRAL MATERIAL in the code) defined as $\omega_{p}\sqrt{f}$ is varied. Note the structure of the list called $\mathbf{matTOT}$. This list changes in case of a standard or alternative (in this work preserving) FP cavity. At the end of the script, the computed observables are shown: $\mathbf{Tsp}$ ($T^{\rightarrow}_{+}$ for light propagation from right to left), $\mathbf{Tsm}$ ($T^{\rightarrow}_{-}$), $\mathbf{Rsp}$ ($R^{\leftarrow}_{+}$ for light propagation from right to left), $\mathbf{Rsm}$ ($R^{\leftarrow}_{-}$) and $\mathbf{dct\_s}$ ($\mathcal{DCT}$ for light propagation from right to left). In case the user is interested in computing the same observables but for the opposite light propagation has to type $\mathbf{Tdp}$, $\mathbf{Tdm}$, $\mathbf{Rdp}$, $\mathbf{Rdm}$ or $\mathbf{dct\_d}$ respectively. The user can also type $\mathbf{dcr\_s}$ ($\mathcal{DCR}$ for light propagation from left to right) or $\mathbf{dcr\_d}$ ($\mathcal{DCR}$ for light propagation from right to left). The letter s stands for sinister (latin word to say ``on the left-side'') and d stands for dexter (latin word to say ``on the right-side'').
 \begin{lstlisting}[language=Python, caption=Layers of a standard FP.]
 coupl = np.linspace(0.0, 1.0, 100)
 
@@ -409,7 +409,7 @@ plt.savefig('Tplus_StandardCavity_VarCoupling.pdf', bbox_inches = 'tight')
 show() 
 \end{lstlisting}
 \section{Fields in cavity}
-TSCAT is able to compute the amplitudes of the polarized electric fields in a given layer. Here we show two examples of the intensity of the LCP and RCP field when LCP impinges on the cavity made by preserving mirrors. The multilayers structure is similar to the structure presented in Listing \ref{multPres} with the difference that here we consider an empty cavity. Before defining all the layers, we define the range of the distance of the intracavity space called $\mathbf{l}$, and the list of the amplitudes called $\mathbf{ampl}$. Eventually, the list of the amplitudes is filled by calling a function of the source code: $\mathbf{calc\_ampl()}$. This function has three arguments: the first is the number of the layer the user wants to study, the second is in the form [1, 0] for incoming LCP, [0, 1] for incoming RCP and [1, 1] for a mixture of both polarizations. The third argument contains the frequency $\omega$ in units of eV. The list $\mathbf{ampl}$ is then reshaped with arguments $\mathbf{len(l)}$, the 4 polarized field intensities $\mathbf{Elp}$ ($E^{+}_{\rightarrow}$), $\mathbf{Erp}$ ($E^{+}_{\leftarrow}$), $\mathbf{Elm}$ ($E^{-}_{\rightarrow}$), $\mathbf{Erm}$ ($E^{-}_{\leftarrow}$) and the $\mathbf{len(l)}$. Finally, the total contribution of the polarized intensities is collected in $\mathbf{lcp}$ and $\mathbf{rcp}$.
+TSCAT is able to compute the amplitudes of the polarized electric fields in a given layer. Here we show two examples of the intensity of the LCP and RCP field when LCP impinges on the cavity made by preserving mirrors. The multilayers structure is similar to the structure presented in Listing~\ref{multPres} with the difference that here we consider an empty cavity. Before defining all the layers, we define the range of the distance of the intracavity space called $\mathbf{l}$, and the list of the amplitudes called $\mathbf{ampl}$. Eventually, the list of the amplitudes is filled by calling a function of the source code: $\mathbf{calc\_ampl()}$. This function has three arguments: the first is the number of the layer the user wants to study, the second is in the form [1, 0] for incoming LCP, [0, 1] for incoming RCP and [1, 1] for a mixture of both polarizations. The third argument contains the frequency $\omega$ in units of eV. The list $\mathbf{ampl}$ is then reshaped with arguments $\mathbf{len(l)}$, the 4 polarized field intensities $\mathbf{Elp}$ ($E^{+}_{\rightarrow}$), $\mathbf{Erp}$ ($E^{+}_{\leftarrow}$), $\mathbf{Elm}$ ($E^{-}_{\rightarrow}$), $\mathbf{Erm}$ ($E^{-}_{\leftarrow}$) and the $\mathbf{len(l)}$. Finally, the total contribution of the polarized intensities is collected in $\mathbf{lcp}$ and $\mathbf{rcp}$.
 \begin{lstlisting}[language=Python, caption=]
 l = np.linspace(150, 450, 600)
 ampl = list()
@@ -433,17 +433,17 @@ lcp = Elp * Elp.conj() + Erp * Erp.conj()  # total LCP in layer 2 (inside the ca
 rcp = Elm * Elm.conj() + Erm * Erm.conj()  # total RCP in layer 2 (inside the cavity)
 #####################################################################################
 \end{lstlisting}
-Figure \ref{LCPlcp} shows the case when the cavity is illuminated by LCP light. In this case the LCP light is largely acumulated inside the cavity near the HP region. In contrast, at resonance the cavity is filled only by RCP light when LCP shines on the cavity, due to the efficient cross-convertion of polarization from LCP to RCP. This aspect is shown in Figure \ref{RCPlcp}.
+Figure~\ref{LCPlcp} shows the case when the cavity is illuminated by LCP light. In this case the LCP light is largely acumulated inside the cavity near the HP region. In contrast, at resonance the cavity is filled only by RCP light when LCP shines on the cavity, due to the efficient cross-convertion of polarization from LCP to RCP\@. This aspect is shown in Figure~\ref{RCPlcp}.
 \begin{figure}[H]
 \begin{center}
-\includegraphics[width=0.5\linewidth]{Suppl_Code/LCPlcp.pdf}
+\includegraphics[width=0.5\linewidth]{LCPlcp.pdf}
 \end{center}
 \caption{Quantification of the LCP in-cavity field intensities when LCP shines on the cavity.}
 \label{LCPlcp}
 \end{figure}
 \begin{figure}[H]
 \begin{center}
-\includegraphics[width=0.5\linewidth]{Suppl_Code/RCPlcp.pdf}
+\includegraphics[width=0.5\linewidth]{RCPlcp.pdf}
 \end{center}
 \caption{Quantification of the RCP in-cavity field intensities when LCP shines on the cavity.}
 \label{RCPlcp}
@@ -853,7 +853,7 @@ plt.savefig('DCT_MetaFilledCavity_VarCoupling.pdf', bbox_inches='tight')
 show()
 \end{lstlisting}
 \newpage
-\subsection{Script for Figure \ref{LCPlcp}}
+\subsection{Script for Figure~\ref{LCPlcp}}
 \begin{lstlisting}[language=Python, caption=Script for Figure \ref{LCPlcp}]
 ###########
 # LIBRARIES
