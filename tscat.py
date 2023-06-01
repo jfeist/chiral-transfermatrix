@@ -61,8 +61,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
 ######################################################################################################################################################################
         self.phas = []  # list of matrix phases
         for j in range(1, len(d) - 1):  # cycle to fill the list with the phase matrix
-            strmat = mat[j]  # string containing the material name
-            if strmat == "Custom":
+            if mat[j] == "Custom": # string containing the material name
                 IdMatrix = np.zeros((len(omega), 4, 4), dtype=complex)  # identity matrix 4x4 for the single layer
                 IdMatrix[:,range(4),range(4)] = 1
                 self.phas.append(IdMatrix)
@@ -77,12 +76,11 @@ class TScat:  # creation of the class which computes all is necessary to study a
         counter_custom=0
         self.M12 = []  # list of the matrix of a single interface
         for i in range(len(d) - 1):  # cycle to fill the list with the array of thetas
-            strmatsucc = mat[i + 1]  # string containing the following material name
-            theta12 = [thetatp[i + 1], thetatm[i + 1], thetatp[i], thetatm[i]]
-            if strmatsucc == "Custom":
+            if mat[i+1] == "Custom": # string containing the following material name
                 self.M12.append(self.buildmatCustom(scat[counter_custom]))  # filling the list with the Preserving Chiral Mirror interface
-                counter_custom=counter_custom+1
+                counter_custom += 1
             else:
+                theta12 = [thetatp[i + 1], thetatm[i + 1], thetatp[i], thetatm[i]]
                 self.M12.append(self.buildmat(self.n[i + 1], self.n[i], self.mu[i], self.mu[i + 1], theta12)) # filling the list with the matrix interface
 ############################################################################################################################################################
 
