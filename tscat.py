@@ -217,49 +217,23 @@ class TScat:  # creation of the class which computes all is necessary to study a
 ##############################################################################################################
     def calc_ampl(self, layer, cinc, omega, dlayer=None):
         vw_list = np.zeros((len(omega), 4, len(self.d)), dtype=complex)
-        Tmat = np.zeros((len(omega), 4, 4), dtype=complex)
-        vw = np.zeros(4, dtype=complex)
-        cin = np.ones(4, dtype=complex)
-        cf = np.zeros(4, dtype=complex)
-        cumul = np.ones((len(omega), 4, 4), dtype=complex)
-        dum = self.M12[-1].copy()
-        assert dum.shape==(len(omega),4,4)
-        for k in range(len(omega)):  # input coefficients (the reflections are needed to evaluate the outputs)
-            cumul[k, :, :] = dum[k, : ,:]
-            cin[0:2] = cinc
-            cin[2:4] = self.Rs[k,:, :] @ cin[0:2]
-            Tmat[k, :, :] = self.S[k, :, :]
-            cf[0:2] = np.dot(self.Ts[k, :, :], cin[0:2])
-            vw = np.dot(np.linalg.inv(Tmat[k, :, :]), cin) #it is cf!
-            vw_list[k,:,-1] = vw
-            vw = np.dot(cumul[k,:,:],vw)
-            vw_list[k,:,-2] = vw
-            for i in range(len(self.d)-2,0,-1):
-                a = self.phas[i-1]
-                b = self.M12[i-1]
-                cumul[k,:,:] = np.dot(b[k,:,:], a[k,:,:])
-                vw = np.dot(cumul[k,:,:], vw)
-                vw_list[k,:,i-1] = vw
+        cin = np.ones((len(omega), 4), dtype=complex)
+
+        # input coefficients (the reflections are needed to evaluate the outputs)
+        cin[:, 0:2] = cinc
+        cin[:, 2:4] = np.einsum("wij,wj->wi", self.Rs, cin[:,0:2])
+        vw = np.linalg.solve(self.S, cin) #it is cf!
+        assert vw.shape == (len(omega),4)
+        vw_list[:,:,-1] = vw
+        vw = np.einsum("wij,wj->wi", self.M12[-1], vw)
+        vw_list[:,:,-2] = vw
+        for i in range(len(self.d)-2,0,-1):
+            a = self.phas[i-1]
+            b = self.M12[i-1]
+            vw = np.einsum("wij,wj->wi", b @ a, vw)
+            vw_list[:,:,i-1] = vw
         self.fwd2 = vw_list[:,:,layer]
 
         return self.fwd2
-#
-#
-#        if dlayer is not None:
-#            last_phas=phas[layer]
-#            phas_dist=list()
-#            field_dist=list()
-#            for k in range(len(omega)):  # input coefficients (the reflections are needed to evaluate the outputs)
-#                vw_distance=np.dot(vw_list[:,layer,k],np.linalg.inv(last_phas[:,:,k])) #forse layer-1
-#            for dist in range(len(dlayer)):
-#                phas_dist.append(self.phimat(self.thetatp[layer],self.thetatm[layer],self.npl[layer],self.npm[layer],omega,dlayer[dist],self.mat[layer]))
-#                a=phas_dist[-1]
-#            #print(np.shape(phas_dist),np.shape(self.npl[layer]))
-#                for k in range(len(omega)):
-#                    field_dist.append(np.dot(vw_list[:,layer,k],a[:,:,k]))
-#            self.field_dist=field_dist
-#            return self.field_dist
-#        else:
-
 ###############################################################################################################
 
