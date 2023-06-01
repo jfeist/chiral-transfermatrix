@@ -80,10 +80,10 @@ class TScat:  # creation of the class which computes all is necessary to study a
             strmatsucc = mat[i + 1]  # string containing the following material name
             theta12 = [thetatp[i + 1], thetatm[i + 1], thetatp[i], thetatm[i]]
             if strmatsucc == "Custom":
-                self.M12.append(self.buildmatCustom(omega,scat[counter_custom]))  # filling the list with the Preserving Chiral Mirror interface
+                self.M12.append(self.buildmatCustom(scat[counter_custom]))  # filling the list with the Preserving Chiral Mirror interface
                 counter_custom=counter_custom+1
             else:
-                self.M12.append(self.buildmat(self.n[i + 1], self.n[i], self.mu[i], self.mu[i + 1], theta12, omega).transpose(2,0,1)) # filling the list with the matrix interface
+                self.M12.append(self.buildmat(self.n[i + 1], self.n[i], self.mu[i], self.mu[i + 1], theta12)) # filling the list with the matrix interface
 ############################################################################################################################################################
 
 
@@ -172,63 +172,34 @@ class TScat:  # creation of the class which computes all is necessary to study a
 ########################################
 # TRANSFER MATRIX FOR A SINGLE INTERFACE
 #############################################################################################################################
-    def buildmat(self, n2, n1, mu1, mu2, theta, omega):
+    def buildmat(self, n2, n1, mu1, mu2, theta):
         et = (n2 / n1) * np.sqrt(mu1 / mu2)  # ratio of impendances
-        ratiocos = np.cos(theta[0:2])[None,:,:] / np.cos(theta[2:4])[:,None,:] # ratio of cosines of the structure of matrix
+        theta = np.asarray(theta).T
+        ratiocos = np.cos(theta[:,None,0:2]) / np.cos(theta[:,2:4,None]) # ratio of cosines of the structure of matrix
         par_tr = np.array([[1,-1],[-1,1]]) # matrix to change the sign of the matrix elements to fill correctly
-        M = np.empty((4, 4, len(omega)), dtype=complex)  # matrix 4x4 of zeros for the single layer
-        M[0:2,0:2] = M[2:4,2:4] = (et + par_tr[:,:,None]) / 4 * (1 + par_tr[:,:,None] * ratiocos)  # array of the transmission matrix
-        M[0:2,2:4] = M[2:4,0:2] = (et + par_tr[:,:,None]) / 4 * (1 - par_tr[:,:,None] * ratiocos)  # array of the reflection matrix
-        return M
+        Mt = (et[:,None,None] + par_tr) * (1 + par_tr * ratiocos) / 4 # array of the transmission matrix
+        Mr = (et[:,None,None] + par_tr) * (1 - par_tr * ratiocos) / 4 # array of the reflection matrix
+        return np.block([[Mt,Mr],[Mr,Mt]])
 ################################################################################################################################
 
 
 ##################################################################
 # TRANSFER MATRIX FOR SPIN PRESERVING MIRROR (AT NORMAL INCIDENCE)
 #########################################################################################################################################
-    def buildmatCustom(self, omega, scat):  # buildmat has no mur in this function (no magnetic field)
+    def buildmatCustom(self, scat):  # buildmat has no mur in this function (no magnetic field)
+        t_right, t_left, r_right, r_left = scat
 
-        Jr = np.zeros((len(omega), 2, 2), dtype=complex)  # Jones matrix for the reflection
-        Jt = np.zeros((len(omega), 2, 2), dtype=complex)  # Jones matrix for the transmission
-        Jre = np.zeros((len(omega), 2, 2), dtype=complex)  # Jones matrix for the reflection
-        Jte = np.zeros((len(omega), 2, 2), dtype=complex)  # Jones matrix for the transmission
-
-        t_right = scat[0]
-        t_left = scat[1]
-        r_right = scat[2]
-        r_left = scat[3]
-        
-        Jr[:, 0, 0] = r_left[0]
-        Jr[:, 0, 1] = r_left[1]
-        Jr[:, 1, 0] = r_left[2]
-        Jr[:, 1, 1] = r_left[3]
-
-        Jt[:, 0, 0] = t_right[0]
-        Jt[:, 0, 1] = t_right[1]
-        Jt[:, 1, 0] = t_right[2]
-        Jt[:, 1, 1] = t_right[3]
-
-        Jre[:, 0, 0] = r_right[0]
-        Jre[:, 0, 1] = r_right[1]
-        Jre[:, 1, 0] = r_right[2]
-        Jre[:, 1, 1] = r_right[3]
-
-        Jte[:, 0, 0] = t_left[0]
-        Jte[:, 0, 1] = t_left[1]
-        Jte[:, 1, 0] = t_left[2]
-        Jte[:, 1, 1] = t_left[3]
+        Jr = np.array(r_left).T.reshape(-1,2,2)
+        Jt = np.array(t_right).T.reshape(-1,2,2)
+        Jre = np.array(r_right).T.reshape(-1,2,2)
+        Jte = np.array(t_left).T.reshape(-1,2,2)
 
         Mt = np.linalg.inv(Jt)  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
         Mr = Jr @ Mt  # Submatrix 2x2 for the reflection
         Mre = -Mt @ Jre  # Submatrix 2x2 for the reflection on the opposite side
         Mte = Jte - Mr @ Jre
 
-        M = np.empty((len(omega), 4, 4), dtype=complex)  # matrix 4x4 of zeros for the single layer
-        M[:,:2,:2] = Mt
-        M[:,:2,2:] = Mre
-        M[:,2:,:2] = Mr
-        M[:,2:,2:] = Mte
-        return M
+        return np.block([[Mt,Mre],[Mr,Mte]])
 ####################################################################################################################################
 
 
