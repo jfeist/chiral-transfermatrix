@@ -62,12 +62,12 @@ class TScat:  # creation of the class which computes all is necessary to study a
         self.phas = []  # list of matrix phases
         for j in range(1, len(d) - 1):  # cycle to fill the list with the phase matrix
             strmat = mat[j]  # string containing the material name
-            if (strmat == "Custom"):
+            if strmat == "Custom":
                 IdMatrix = np.zeros((len(omega), 4, 4), dtype=complex)  # identity matrix 4x4 for the single layer
                 IdMatrix[:,range(4),range(4)] = 1
                 self.phas.append(IdMatrix)
             else:
-                self.phas.append(self.phimat(thetatp[j], thetatm[j], self.npl[j], self.npm[j], omega, d[j]).transpose(2,0,1))
+                self.phas.append(self.phimat(thetatp[j], thetatm[j], self.npl[j], self.npm[j], omega, d[j]))
 #######################################################################################################################################################################
 
 
@@ -161,10 +161,10 @@ class TScat:  # creation of the class which computes all is necessary to study a
         phim = 2 * np.pi * npm * d * np.cos(thetam) / lamb  # phase for n-
   #      phip =   np.pi * npl * d * np.cos(thetap) / lamb
   #      phim =   np.pi * npm * d * np.cos(thetam) / lamb
-        phil = np.array([-phip, -phim, phip, phim])  # array of phases
-        Pmat = np.zeros((4, 4, len(omega)), dtype=complex)  # creation of matrix of phases
+        phil = [-phip, -phim, phip, phim]  # array of phases
+        Pmat = np.zeros((len(omega), 4, 4), dtype=complex)  # creation of matrix of phases
         for j in range(4):
-            Pmat[j, j, :] = np.exp(1j * phil[j, :])  # fill the matrix with the elements plus a row of frequencies
+            Pmat[:, j, j] = np.exp(1j * phil[j])  # fill the matrix with the elements plus a row of frequencies
         return Pmat
 ##################################################################################################################################
 
