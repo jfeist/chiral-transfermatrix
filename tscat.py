@@ -67,7 +67,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
                 IdMatrix[:,range(4),range(4)] = 1
                 self.phas.append(IdMatrix)
             else:
-                self.phas.append(self.phimat(thetatp[j], thetatm[j], self.npl[j], self.npm[j], omega, d[j], mat[j]).transpose(2,0,1))
+                self.phas.append(self.phimat(thetatp[j], thetatm[j], self.npl[j], self.npm[j], omega, d[j]).transpose(2,0,1))
 #######################################################################################################################################################################
 
 
@@ -96,7 +96,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
         for i in range(len(d) - 2):  # cycle to add a phase and a successive interface
             a = self.phas[i]
             b = self.M12[i + 1]
-            S[...] = S @ a @ b
+            S = S @ a @ b
             #c = M12[i]
             #for k in range(len(omega)):  # cycle over the omegas
             #    S[:, :, k] = S[:, :, k] @ a[:, :, k] @ b[:, :, k]
@@ -112,7 +112,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
         tr = S[:, 2:4, 0:2]  # reflection block lower left
         ttp = S[:, 2:4, 2:4]  # transmission block lower right
         Rs = tr @ tti  # reflection matrix for incidence from the left
-        Ts = tti.copy()  # transmission matrix for incidence from the left
+        Ts = tti  # transmission matrix for incidence from the left
         Rd = -tti @ trp  # reflection matrix for incidence from the right
         Td = ttp - tr @ tti @ trp  # transmission matrix for incidence from the right
         self.Rs=Rs
@@ -155,7 +155,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
 #############################################################
 # PHASE MATRIX FOR THE PROPAGATION OF LIGHT INSIDE THE MEDIUM
 #################################################################################################################################
-    def phimat(self, thetap, thetam, npl, npm, omega, d, mat):
+    def phimat(self, thetap, thetam, npl, npm, omega, d):
         lamb = 1239.841984332002 / omega  # lambda in nanometers, omega in ev
         phip = 2 * np.pi * npl * d * np.cos(thetap) / lamb  # phase for n+
         phim = 2 * np.pi * npm * d * np.cos(thetam) / lamb  # phase for n-
@@ -163,9 +163,8 @@ class TScat:  # creation of the class which computes all is necessary to study a
   #      phim =   np.pi * npm * d * np.cos(thetam) / lamb
         phil = np.array([-phip, -phim, phip, phim])  # array of phases
         Pmat = np.zeros((4, 4, len(omega)), dtype=complex)  # creation of matrix of phases
-        for i in range(len(omega)):
-                for j in range(4):
-                    Pmat[j, j, i] = np.exp(1j * phil[j, i])  # fill the matrix with the elements plus a row of frequencies
+        for j in range(4):
+            Pmat[j, j, :] = np.exp(1j * phil[j, :])  # fill the matrix with the elements plus a row of frequencies
         return Pmat
 ##################################################################################################################################
 
@@ -175,32 +174,11 @@ class TScat:  # creation of the class which computes all is necessary to study a
 #############################################################################################################################
     def buildmat(self, n2, n1, mu1, mu2, theta, omega):
         et = (n2 / n1) * np.sqrt(mu1 / mu2)  # ratio of impendances
-        ratiocos = np.array(
-            [
-                np.cos(theta[0]) / np.cos(theta[2]),
-                np.cos(theta[1]) / np.cos(theta[2]),  # ratio of cosines of the structure of matrix
-                np.cos(theta[0]) / np.cos(theta[3]),
-                np.cos(theta[1]) / np.cos(theta[3])
-            ]
-        )
-        Mt = np.zeros((4, len(omega)), dtype=complex)  # array of 0s for the transmission
-        Mr = np.zeros((4, len(omega)), dtype=complex)  # array of 0s for the reflection
-        par_tr = np.ones_like((Mt))  # identity matrix 4x4
-        for i in range(len(omega)):  # cycle over the range of omegas
-            par_tr[:, i] = par_tr[:, i] * [1, -1, -1, 1]  # matrix to change the sign of the matrix elements to fill correctly
-            Mt[:, i] = np.array(
-                (et[i] + 1 * par_tr[:, i]) / 4 * (1 + par_tr[:, i] * ratiocos[:, i])  # array of the transmission matrix
-            )
-            Mr[:, i] = np.array(
-                (et[i] + 1 * par_tr[:, i]) / 4 * (1 - par_tr[:, i] * ratiocos[:, i])  # array of the reflection matrix
-            )
-        Mt = Mt.reshape(2, 2, len(omega))  # matrix 2x2 for the reflection
-        Mr = Mr.reshape(2, 2, len(omega))  # matrix 2x2 for the transmission
-        M = np.zeros((4, 4, len(omega)), dtype=complex)  # matrix 4x4 of zeros for the single layer
-        for i in range(len(omega)):
-            M[:, :, i] = np.block(
-                    [[Mt[:, :, i], Mr[:, :, i]], [Mr[:, :, i], Mt[:, :, i]]]  # block matrix for the single layer
-            )
+        ratiocos = np.cos(theta[0:2])[None,:,:] / np.cos(theta[2:4])[:,None,:] # ratio of cosines of the structure of matrix
+        par_tr = np.array([[1,-1],[-1,1]]) # matrix to change the sign of the matrix elements to fill correctly
+        M = np.empty((4, 4, len(omega)), dtype=complex)  # matrix 4x4 of zeros for the single layer
+        M[0:2,0:2] = M[2:4,2:4] = (et + par_tr[:,:,None]) / 4 * (1 + par_tr[:,:,None] * ratiocos)  # array of the transmission matrix
+        M[0:2,2:4] = M[2:4,0:2] = (et + par_tr[:,:,None]) / 4 * (1 - par_tr[:,:,None] * ratiocos)  # array of the reflection matrix
         return M
 ################################################################################################################################
 
@@ -224,50 +202,27 @@ class TScat:  # creation of the class which computes all is necessary to study a
         r_right = scat[2]
         r_left = scat[3]
 
-        r1_left1 = r_left[0]
-        r1_left2 = r_left[1]
-        r1_left3 = r_left[2]
-        r1_left4 = r_left[3]
+        Jr[0, 0, :] = r_left[0]
+        Jr[0, 1, :] = r_left[1]
+        Jr[1, 0, :] = r_left[2]
+        Jr[1, 1, :] = r_left[3]
 
-        t1_left1 = t_left[0]
-        t1_left2 = t_left[1]
-        t1_left3 = t_left[2]
-        t1_left4 = t_left[3]
+        Jt[0, 0, :] = t_right[0]
+        Jt[0, 1, :] = t_right[1]
+        Jt[1, 0, :] = t_right[2]
+        Jt[1, 1, :] = t_right[3]
 
-        r1_right1 = r_right[0]
-        r1_right2 = r_right[1]
-        r1_right3 = r_right[2]
-        r1_right4 = r_right[3]
+        Jre[0, 0, :] = r_right[0]
+        Jre[0, 1, :] = r_right[1]
+        Jre[1, 0, :] = r_right[2]
+        Jre[1, 1, :] = r_right[3]
 
-        t1_right1 = t_right[0]
-        t1_right2 = t_right[1]
-        t1_right3 = t_right[2]
-        t1_right4 = t_right[3]
+        Jte[0, 0, :] = t_left[0]
+        Jte[0, 1, :] = t_left[1]
+        Jte[1, 0, :] = t_left[2]
+        Jte[1, 1, :] = t_left[3]
 
-
-        for k in range(len(omega)):  # cycle over the range of omegas
-            Jr[0, 0, k] = r1_left1[k]
-            Jr[0, 1, k] = r1_left2[k]
-            Jr[1, 0, k] = r1_left3[k]
-            Jr[1, 1, k] = r1_left4[k]
-
-            Jt[0, 0, k] = t1_right1[k]
-            Jt[0, 1, k] = t1_right2[k]
-            Jt[1, 0, k] = t1_right3[k]
-            Jt[1, 1, k] = t1_right4[k]
-
-        for k in range(len(omega)):  # cycle over the range of omegas
-            Jre[0, 0, k] = r1_right1[k]
-            Jre[0, 1, k] = r1_right2[k]
-            Jre[1, 0, k] = r1_right3[k]
-            Jre[1, 1, k] = r1_right4[k]
-
-            Jte[0, 0, k] = t1_left1[k]
-            Jte[0, 1, k] = t1_left2[k]
-            Jte[1, 0, k] = t1_left3[k]
-            Jte[1, 1, k] = t1_left4[k]
-
-
+        for k in range(len(omega)):
             Mt[:,:,k] = np.linalg.inv(Jt[:,:,k])  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
             Mr[:,:,k] = Jr[:,:,k] @ Mt[:,:,k]  # Submatrix 2x2 for the reflection
             Mre[:,:,k] = -Mt[:,:,k] @ Jre[:,:,k]  # Submatrix 2x2 for the reflection on the opposite side
