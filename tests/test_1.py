@@ -11,12 +11,12 @@ import numpy as np
 # GENERAL DEFINITION OF THE DIELECTRIC FUNCTION AND CHIRAL COUPLING
 ###############################################################################################
 def eps_DL(epsinf, omegap, omega, omega0=0, gamma=0, k0=0):
-    eps = epsinf + (omegap**2 / ((omega0**2 - omega**2) - 1j * gamma * omega))  
+    eps = epsinf + (omegap**2 / ((omega0**2 - omega**2) - 1j * gamma * omega))
     # dispersive dielectric function
     n = np.sqrt(eps)
-    
+
     if k0 != 0:
-        k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))  
+        k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))
         # chiral coupling
         return eps, n, k
 
@@ -41,13 +41,13 @@ Rmlist = []
 DCTlist = []
 
 for i in range(len(coupl)):
- 
+
     ################
     # INCIDENT ANGLE
     ################
     theta0 = 0
     ################
-    
+
     #####
     # AIR
     ###############
@@ -56,7 +56,7 @@ for i in range(len(coupl)):
     k1 = 0 * ngrid
     d1 = np.inf
     ###############
-    
+
     ########
     # MIRROR
     ########################################################################################
@@ -66,7 +66,7 @@ for i in range(len(coupl)):
     mu2 = 1 * ngrid
     k2 = 0 * ngrid
     d2 = 30
-    ########################################################################################   
+    ########################################################################################
 
     #################
     # CHIRAL MATERIAL
@@ -76,7 +76,7 @@ for i in range(len(coupl)):
     eps3M, n3, k3 = eps_DL(epsinf, omegapChiral, omega, omega0 = 2.0, gamma = 0.05, k0 = 1e-3)
     mu3 = 1 * ngrid
     dL = 150
-    ########################################################################################## 
+    ##########################################################################################
 
     ########
     # MIRROR
@@ -87,7 +87,7 @@ for i in range(len(coupl)):
     mu4 = 1 * ngrid
     k4 = 0 * ngrid
     d4 = 30
-    ######################################################################################## 
+    ########################################################################################
 
     #####
     # AIR
@@ -97,32 +97,32 @@ for i in range(len(coupl)):
     k5 = 0 * ngrid
     d5 = np.inf
     ###############
-    
+
     ########################################
     # ALL THE ARRAYS OF THE INPUT PARAMETERS
     ####################################################
     nTOT = [n1, n2, n3, n4, n5]
     muTOT = [mu1, mu2, mu3, mu4, mu5]
-    kTOT = [k1, k2, k3, k4, k5] 
-    dTOT = [d1, d2, dL, d4, d5] 
+    kTOT = [k1, k2, k3, k4, k5]
+    dTOT = [d1, d2, dL, d4, d5]
     matTOT = ['air', 'mirr', 'ChiralMat', 'mirr', 'air']
     ####################################################
-    
+
     ######################
     # CALLING OF THE CLASS
     ################################################################
-    tScat = ts.TScat(theta0, nTOT, muTOT, kTOT, dTOT, omega, matTOT)  
+    tScat = ts.TScat(theta0, nTOT, muTOT, kTOT, dTOT, omega, matTOT)
     ################################################################
-    
+
     Tplist.append(tScat.Tsp)
     Tmlist.append(tScat.Tsm)
     Rplist.append(tScat.Rsp)
     Rmlist.append(tScat.Rsm)
     DCTlist.append(tScat.dct_s)
-    
+
 #############
 # OBSERVABLES
-#######################    
+#######################
 arr1 = np.array(Tplist)
 arr2 = np.array(Tmlist)
 arr3 = np.array(Rplist)

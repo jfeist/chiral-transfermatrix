@@ -11,12 +11,12 @@ import numpy as np
 # GENERAL DEFINITION OF THE DIELECTRIC FUNCTION AND CHIRAL COUPLING
 ################################################################################################
 def eps_DL(epsinf, omegap, omega, omega0=0, gamma=0, k0=0):
-    eps = epsinf + (omegap**2 / ((omega0**2 - omega**2) - 1j * gamma * omega))  
+    eps = epsinf + (omegap**2 / ((omega0**2 - omega**2) - 1j * gamma * omega))
     # dispersive dielectric function
     n = np.sqrt(eps)
-    
+
     if k0 != 0:
-        k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))  
+        k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))
         # chiral coupling
         return eps, n, k
 
@@ -48,19 +48,19 @@ t = np.sqrt((1 - np.abs(tPM)**2) / 2.0)
 phit = np.pi / 2
 pst = np.exp(1j * phit)
 
-tPP_r = t * pst 
+tPP_r = t * pst
 tMP_r = 0.0j * ngrid
-tPM_r = tPM * phase 
+tPM_r = tPM * phase
 tMM_r = t * pst
 
-tPP_l = t * pst 
-tMP_l = tPM * phase 
+tPP_l = t * pst
+tMP_l = tPM * phase
 tPM_l = 0.0j * ngrid
-tMM_l = t * pst 
+tMM_l = t * pst
 
-rPP_r = tPM * pst**4 * (1 / phase)**3 
-rMP_r = - t * (1 / phase)**2 * (pst**3) 
-rPM_r = - t * (1 / phase)**2 * (pst**3) 
+rPP_r = tPM * pst**4 * (1 / phase)**3
+rMP_r = - t * (1 / phase)**2 * (pst**3)
+rPM_r = - t * (1 / phase)**2 * (pst**3)
 rMM_r = 0.0j * ngrid
 
 rPP_l = 0.0j * ngrid
@@ -101,8 +101,8 @@ tPM_l = tPM * phase
 tMM_l = t * pst
 
 rPP_r = 0.0j * ngrid
-rMP_r = - t * (1 / phase)**2 * (pst**3) 
-rPM_r = - t * (1 / phase)**2 * (pst**3) 
+rMP_r = - t * (1 / phase)**2 * (pst**3)
+rPM_r = - t * (1 / phase)**2 * (pst**3)
 rMM_r = tPM * pst**4 * (1 / phase)**3
 
 rPP_l = - tPM * phase
@@ -128,7 +128,7 @@ DCTlist = []
 DCAlist = []
 
 for i in range(len(coupl)):
-    
+
     ################
     # INCIDENT ANGLE
     ################
@@ -152,9 +152,9 @@ for i in range(len(coupl)):
     n2 = 1 * ngrid
     d2 = 0  # the distance has no influence
     #######################################
-    
+
     #####
-    # AIR 
+    # AIR
     ###############
     n3 = 1 * ngrid
     mu3 = 1 * ngrid
@@ -171,10 +171,10 @@ for i in range(len(coupl)):
     mu4 = 1 * ngrid
     k4 = 0 * ngrid
     dL = 180
-    ######################################################################################### 
-       
+    #########################################################################################
+
     #####
-    # AIR 
+    # AIR
     ###############
     n5 = 1 * ngrid
     mu5 = 1 * ngrid
@@ -189,7 +189,7 @@ for i in range(len(coupl)):
     mu6 = 1 * ngrid
     n6 = 1 * ngrid
     d6 = 0 # the distance has no influence
-    ######################################  
+    ######################################
 
     #####
     # AIR
@@ -203,28 +203,28 @@ for i in range(len(coupl)):
     ########################################
     # ALL THE ARRAYS OF THE INPUT PARAMETERS
     #############################################################################
-    nTOT = [n1, n2, n3, n4, n5, n6, n7] 
+    nTOT = [n1, n2, n3, n4, n5, n6, n7]
     muTOT = [mu1, mu2, mu3, mu4, mu5, mu6, mu7]
-    kTOT = [k1, k2, k3, k4, k5, k6, k7] 
-    dTOT = [d1, d2, d3, dL, d5, d6, d7] 
+    kTOT = [k1, k2, k3, k4, k5, k6, k7]
+    dTOT = [d1, d2, d3, dL, d5, d6, d7]
     matTOT = ['air', 'Custom', 'air', 'ChiralMat', 'air', 'Custom', 'air']
     #############################################################################
 
     ###########################################
     # CALLING OF THE CLASS FOR THE EMPTY CAVITY
     #########################################################################
-    tScat = ts.TScat(theta0, nTOT, muTOT, kTOT, dTOT, omega, matTOT, scatTOT)  
+    tScat = ts.TScat(theta0, nTOT, muTOT, kTOT, dTOT, omega, matTOT, scatTOT)
     #########################################################################
-    
+
     Tplist.append(tScat.Tsp)
     Tmlist.append(tScat.Tsm)
     Rplist.append(tScat.Rsp)
     Rmlist.append(tScat.Rsm)
     DCTlist.append(tScat.dct_s)
-    
+
 #############
 # OBSERVABLES
-#######################    
+#######################
 arr1 = np.array(Tplist)
 arr2 = np.array(Tmlist)
 arr3 = np.array(Rplist)

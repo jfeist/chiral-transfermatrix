@@ -11,12 +11,12 @@ import numpy as np
 # GENERAL DEFINITION OF THE DIELECTRIC FUNCTION AND CHIRAL COUPLING
 ################################################################################################
 def eps_DL(epsinf, omegap, omega, omega0=0, gamma=0, k0=0):
-    eps = epsinf + (omegap**2 / ((omega0**2 - omega**2) - 1j * gamma * omega))  
+    eps = epsinf + (omegap**2 / ((omega0**2 - omega**2) - 1j * gamma * omega))
     # dispersive dielectric function
     n = np.sqrt(eps)
-    
+
     if k0 != 0:
-        k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))  
+        k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))
         # chiral coupling
         return eps, n, k
 
@@ -48,19 +48,19 @@ t = np.sqrt((1 - np.abs(tPM)**2) / 2.0)
 phit = np.pi / 2
 pst = np.exp(1j * phit)
 
-tPP_r = t * pst 
+tPP_r = t * pst
 tMP_r = 0.0j * ngrid
-tPM_r = tPM * phase 
+tPM_r = tPM * phase
 tMM_r = t * pst
 
-tPP_l = t * pst 
-tMP_l = tPM * phase 
+tPP_l = t * pst
+tMP_l = tPM * phase
 tPM_l = 0.0j * ngrid
-tMM_l = t * pst 
+tMM_l = t * pst
 
-rPP_r = tPM * pst**4 * (1 / phase)**3 
-rMP_r = - t * (1 / phase)**2 * (pst**3) 
-rPM_r = - t * (1 / phase)**2 * (pst**3) 
+rPP_r = tPM * pst**4 * (1 / phase)**3
+rMP_r = - t * (1 / phase)**2 * (pst**3)
+rPM_r = - t * (1 / phase)**2 * (pst**3)
 rMM_r = 0.0j * ngrid
 
 rPP_l = 0.0j * ngrid
@@ -101,8 +101,8 @@ tPM_l = tPM * phase
 tMM_l = t * pst
 
 rPP_r = 0.0j * ngrid
-rMP_r = - t * (1 / phase)**2 * (pst**3) 
-rPM_r = - t * (1 / phase)**2 * (pst**3) 
+rMP_r = - t * (1 / phase)**2 * (pst**3)
+rPM_r = - t * (1 / phase)**2 * (pst**3)
 rMM_r = tPM * pst**4 * (1 / phase)**3
 
 rPP_l = - tPM * phase
@@ -122,7 +122,7 @@ l = np.linspace(150, 450, 20)
 ampl = list()
 
 for dist in l:
-    
+
     ################
     # INCIDENT ANGLE
     ################
@@ -146,9 +146,9 @@ for dist in l:
     n2 = 1 * ngrid
     d2 = 0  # the distance has no influence
     #######################################
-    
+
     #####
-    # AIR 
+    # AIR
     ###############
     n3 = 1 * ngrid
     mu3 = 1 * ngrid
@@ -163,7 +163,7 @@ for dist in l:
     mu4 = 1 * ngrid
     n4 = 1 * ngrid
     d4 = 0 # the distance has no influence
-    ######################################  
+    ######################################
 
     #####
     # AIR
@@ -177,32 +177,32 @@ for dist in l:
     ########################################
     # ALL THE ARRAYS OF THE INPUT PARAMETERS
     ##################################################
-    nTOT = [n1, n2, n3, n4, n5] 
+    nTOT = [n1, n2, n3, n4, n5]
     muTOT = [mu1, mu2, mu3, mu4, mu5]
-    kTOT = [k1, k2, k3, k4, k5] 
-    dTOT = [d1, d2, d3, d4, d5] 
+    kTOT = [k1, k2, k3, k4, k5]
+    dTOT = [d1, d2, d3, d4, d5]
     matTOT = ['air', 'Custom', 'air', 'Custom', 'air']
     ##################################################
 
     ###########################################
     # CALLING OF THE CLASS FOR THE EMPTY CAVITY
     #########################################################################
-    tScat = ts.TScat(theta0, nTOT, muTOT, kTOT, dTOT, omega, matTOT, scatTOT)  
+    tScat = ts.TScat(theta0, nTOT, muTOT, kTOT, dTOT, omega, matTOT, scatTOT)
     #########################################################################
 
     ampl.append(tScat.calc_ampl(2, [1,0], omega))  # field in cavity for an incoming LCP wave
-    
-    
+
+
 #############
 # OBSERVABLES
-#####################################################################################    
-ampl2 = np.array(ampl).reshape(len(l), 4, len(omega))       
-Elp = ampl2[:, 0, :]
-Elm = ampl2[:, 1, :]
-Erp = ampl2[:, 2, :]
-Erm = ampl2[:, 3, :]
-lcp = Elp * Elp.conj()+ Erp * Erp.conj()  # total LCP in layer 2 (inside the cavity)
-rcp = Elm * Elm.conj() + Erm * Erm.conj()  # total RCP in layer 2 (inside the cavity)
+#####################################################################################
+ampl2 = np.array(ampl) #.reshape(len(l), len(omega), 4)
+Elp = ampl2[:, :, 0]
+Elm = ampl2[:, :, 1]
+Erp = ampl2[:, :, 2]
+Erm = ampl2[:, :, 3]
+lcp = abs(Elp)**2 + abs(Erp)**2  # total LCP in layer 2 (inside the cavity)
+rcp = abs(Elm)**2 + abs(Erm)**2  # total RCP in layer 2 (inside the cavity)
 #####################################################################################
 
 # np.savez_compressed('tests/test_3a.npz', omega=omega, ELp=Elp, ELm=Elm, ERp=Erp, ERm=Erm, lcp=lcp, rcp=rcp)
