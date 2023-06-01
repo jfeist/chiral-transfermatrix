@@ -216,4 +216,12 @@ def test_3():
     assert np.allclose(lcp, ref_data['lcp'])
     assert np.allclose(rcp, ref_data['rcp'])
 
+    assert np.allclose(omega, ref_data['omega'])
+    assert np.allclose(Elp, ref_data['ELp'],atol=1e-4)
+    assert np.allclose(Elm, ref_data['ELm'])
+    assert np.allclose(Erp, ref_data['ERp'],atol=1e-4)
+    assert np.allclose(Erm, ref_data['ERm'],atol=1e-6)
+    assert np.allclose(lcp, ref_data['lcp'],atol=1e-5)
+    assert np.allclose(rcp, ref_data['rcp'])
+
     print('Test 3 passed!')

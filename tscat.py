@@ -80,7 +80,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
             strmatsucc = mat[i + 1]  # string containing the following material name
             theta12 = [thetatp[i + 1], thetatm[i + 1], thetatp[i], thetatm[i]]
             if strmatsucc == "Custom":
-                self.M12.append(self.buildmatCustom(omega,scat[counter_custom]).transpose(2,0,1))  # filling the list with the Preserving Chiral Mirror interface
+                self.M12.append(self.buildmatCustom(omega,scat[counter_custom]))  # filling the list with the Preserving Chiral Mirror interface
                 counter_custom=counter_custom+1
             else:
                 self.M12.append(self.buildmat(self.n[i + 1], self.n[i], self.mu[i], self.mu[i + 1], theta12, omega).transpose(2,0,1)) # filling the list with the matrix interface
@@ -188,53 +188,46 @@ class TScat:  # creation of the class which computes all is necessary to study a
 #########################################################################################################################################
     def buildmatCustom(self, omega, scat):  # buildmat has no mur in this function (no magnetic field)
 
-        Jr = np.zeros((2, 2, len(omega)), dtype=complex)  # Jones matrix for the reflection
-        Jt = np.zeros((2, 2, len(omega)), dtype=complex)  # Jones matrix for the transmission
-        Jre = np.zeros((2, 2, len(omega)), dtype=complex)  # Jones matrix for the reflection
-        Jte = np.zeros((2, 2, len(omega)), dtype=complex)  # Jones matrix for the transmission
-        Mr = np.zeros((2, 2, len(omega)), dtype=complex)  # Jones matrix for the reflection
-        Mt = np.zeros((2, 2, len(omega)), dtype=complex)  # Jones matrix for the transmission
-        Mre = np.zeros((2, 2, len(omega)), dtype=complex)  # Jones matrix for the reflection
-        Mte = np.zeros((2, 2, len(omega)), dtype=complex)  # Jones matrix for the transmission
+        Jr = np.zeros((len(omega), 2, 2), dtype=complex)  # Jones matrix for the reflection
+        Jt = np.zeros((len(omega), 2, 2), dtype=complex)  # Jones matrix for the transmission
+        Jre = np.zeros((len(omega), 2, 2), dtype=complex)  # Jones matrix for the reflection
+        Jte = np.zeros((len(omega), 2, 2), dtype=complex)  # Jones matrix for the transmission
 
         t_right = scat[0]
         t_left = scat[1]
         r_right = scat[2]
         r_left = scat[3]
+        
+        Jr[:, 0, 0] = r_left[0]
+        Jr[:, 0, 1] = r_left[1]
+        Jr[:, 1, 0] = r_left[2]
+        Jr[:, 1, 1] = r_left[3]
 
-        Jr[0, 0, :] = r_left[0]
-        Jr[0, 1, :] = r_left[1]
-        Jr[1, 0, :] = r_left[2]
-        Jr[1, 1, :] = r_left[3]
+        Jt[:, 0, 0] = t_right[0]
+        Jt[:, 0, 1] = t_right[1]
+        Jt[:, 1, 0] = t_right[2]
+        Jt[:, 1, 1] = t_right[3]
 
-        Jt[0, 0, :] = t_right[0]
-        Jt[0, 1, :] = t_right[1]
-        Jt[1, 0, :] = t_right[2]
-        Jt[1, 1, :] = t_right[3]
+        Jre[:, 0, 0] = r_right[0]
+        Jre[:, 0, 1] = r_right[1]
+        Jre[:, 1, 0] = r_right[2]
+        Jre[:, 1, 1] = r_right[3]
 
-        Jre[0, 0, :] = r_right[0]
-        Jre[0, 1, :] = r_right[1]
-        Jre[1, 0, :] = r_right[2]
-        Jre[1, 1, :] = r_right[3]
+        Jte[:, 0, 0] = t_left[0]
+        Jte[:, 0, 1] = t_left[1]
+        Jte[:, 1, 0] = t_left[2]
+        Jte[:, 1, 1] = t_left[3]
 
-        Jte[0, 0, :] = t_left[0]
-        Jte[0, 1, :] = t_left[1]
-        Jte[1, 0, :] = t_left[2]
-        Jte[1, 1, :] = t_left[3]
+        Mt = np.linalg.inv(Jt)  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
+        Mr = Jr @ Mt  # Submatrix 2x2 for the reflection
+        Mre = -Mt @ Jre  # Submatrix 2x2 for the reflection on the opposite side
+        Mte = Jte - Mr @ Jre
 
-        for k in range(len(omega)):
-            Mt[:,:,k] = np.linalg.inv(Jt[:,:,k])  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
-            Mr[:,:,k] = Jr[:,:,k] @ Mt[:,:,k]  # Submatrix 2x2 for the reflection
-            Mre[:,:,k] = -Mt[:,:,k] @ Jre[:,:,k]  # Submatrix 2x2 for the reflection on the opposite side
-            Mte[:,:,k] = Jte[:,:,k]-Mr[:,:,k]@Jre[:,:,k]
-
-
-        M = np.zeros((4, 4, len(omega)), dtype=complex)  # matrix 4x4 of zeros for the single layer
-        for i in range(len(omega)):
-            M[:, :, i] = np.block(
-
-                    [[Mt[:, :, i], Mre[:, :, i]], [Mr[:, :, i], Mte[:, :, i]]]  # block matrix for the single layer
-            )
+        M = np.empty((len(omega), 4, 4), dtype=complex)  # matrix 4x4 of zeros for the single layer
+        M[:,:2,:2] = Mt
+        M[:,:2,2:] = Mre
+        M[:,2:,:2] = Mr
+        M[:,2:,2:] = Mte
         return M
 ####################################################################################################################################
 
