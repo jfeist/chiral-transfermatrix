@@ -62,9 +62,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
         self.phas = []  # list of matrix phases
         for j in range(1, len(d) - 1):  # cycle to fill the list with the phase matrix
             if mat[j] == "Custom": # string containing the material name
-                IdMatrix = np.zeros((len(omega), 4, 4), dtype=complex)  # identity matrix 4x4 for the single layer
-                IdMatrix[:,range(4),range(4)] = 1
-                self.phas.append(IdMatrix)
+                self.phas.append(np.ones((len(omega), 4)))
             else:
                 self.phas.append(self.phimat(thetatp[j], thetatm[j], self.npl[j], self.npm[j], omega, d[j]))
 #######################################################################################################################################################################
@@ -88,53 +86,44 @@ class TScat:  # creation of the class which computes all is necessary to study a
 #############################################################
 # MULTIPLICATION OF TRANSFER MATRICES FOR MULTIPLE INTERFACES
 #######################################################################################
-        S = self.M12[0].copy()  # S of the single interface
-        a = self.phas[0]  # first phase matrix
+        S = self.M12[0] # S of the single interface
 
         for i in range(len(d) - 2):  # cycle to add a phase and a successive interface
             a = self.phas[i]
             b = self.M12[i + 1]
-            S = S @ a @ b
-            #c = M12[i]
-            #for k in range(len(omega)):  # cycle over the omegas
-            #    S[:, :, k] = S[:, :, k] @ a[:, :, k] @ b[:, :, k]
+            c = a[:,:,None] * b # A @ b where A_wij = delta_ij a_wj
+            S = S @ c
+        self.S = S
 #######################################################################################
 
 
 ############################################################################################################################
 # CONSTRUCTION OF 2X2 TRANSMISSION AND REFLECTION MATRICES (FOR LIGHT PROPAGATION FROM LEFT TO RIGHT AND FROM RIGHT TO LEFT)
 ############################################################################################################################
-        tt = S[:, 0:2, 0:2]  # trasmission block upper left
-        tti = np.linalg.inv(tt)  # inversion of trasmission block upper left
-        trp = S[:, 0:2, 2:4]  # reflection block upper right
-        tr = S[:, 2:4, 0:2]  # reflection block lower left
-        ttp = S[:, 2:4, 2:4]  # transmission block lower right
-        Rs = tr @ tti  # reflection matrix for incidence from the left
-        Ts = tti  # transmission matrix for incidence from the left
-        Rd = -tti @ trp  # reflection matrix for incidence from the right
-        Td = ttp - tr @ tti @ trp  # transmission matrix for incidence from the right
-        self.Rs=Rs
-        self.Ts=Ts
-        self.S=S
+        tt  = self.S[:, 0:2, 0:2]  # transmission block upper left
+        trp = self.S[:, 0:2, 2:4]  # reflection block upper right
+        tr  = self.S[:, 2:4, 0:2]  # reflection block lower left
+        ttp = self.S[:, 2:4, 2:4]  # transmission block lower right
+        tti = np.linalg.inv(tt)  # inversion of transmission block upper left
+        self.Rs = tr @ tti  # reflection matrix for incidence from the left
+        self.Ts = tti  # transmission matrix for incidence from the left
+        self.Rd = -tti @ trp  # reflection matrix for incidence from the right
+        self.Td = ttp - tr @ tti @ trp  # transmission matrix for incidence from the right
 ############################################################################################################################
 
 
 ######################################################################################################################
 # CONSTRUCTION OF TRANSMITTANCE, REFLECTANCE, AND DCT (FOR LIGHT PROPAGATION FROM LEFT TO RIGHT AND FROM RIGHT TO LEFT)
 ################################################################################################################################
-        self.ctd = abs(Td)**2
-        self.cts = abs(Ts)**2
-        self.crd = abs(Rd)**2
-        self.crs = abs(Rs)**2
-        self.Tdp = self.ctd[:, 0, 0] + self.ctd[:, 1, 0]  # transmittance + for incidence from the right
-        self.Tdm = self.ctd[:, 1, 1] + self.ctd[:, 0, 1]  # transmittance - for incidence from the right
-        self.Tsp = self.cts[:, 0, 0] + self.cts[:, 1, 0]  # transmittance + for incidence from the left
-        self.Tsm = self.cts[:, 1, 1] + self.cts[:, 0, 1]  # transmittance - for incidence from the left
+        self.ctd = abs(self.Td)**2
+        self.cts = abs(self.Ts)**2
+        self.crd = abs(self.Rd)**2
+        self.crs = abs(self.Rs)**2
+        self.Tdp, self.Tdm = self.ctd.sum(axis=1).T # transmittance +/- for incidence from the right
+        self.Tsp, self.Tsm = self.cts.sum(axis=1).T # transmittance +/- for incidence from the left
 
-        self.Rdp = self.crd[:, 0, 0] + self.crd[:, 1, 0]  # reflectance + for incidence from the right
-        self.Rdm = self.crd[:, 1, 1] + self.crd[:, 0, 1]  # reflectance - for incidence from the right
-        self.Rsp = self.crs[:, 0, 0] + self.crs[:, 1, 0]  # reflectance + for incidence from the left
-        self.Rsm = self.crs[:, 1, 1] + self.crs[:, 0, 1]  # reflectance - for incidence from the left
+        self.Rdp, self.Rdm = self.crd.sum(axis=1).T # reflectance +/- for incidence from the right
+        self.Rsp, self.Rsm = self.crs.sum(axis=1).T # reflectance +/- for incidence from the left
         self.dct_s = self.calc_dct(self.Tsp, self.Tsm)  # dct for incidence from the left
         self.dcr_s = self.calc_dct(self.Rsp, self.Rsm)  # dcr for incidence from the left
         self.dct_r = self.calc_dct(self.Tdp, self.Tdm)  # dct for incidence from the right
@@ -159,11 +148,8 @@ class TScat:  # creation of the class which computes all is necessary to study a
         phim = 2 * np.pi * npm * d * np.cos(thetam) / lamb  # phase for n-
   #      phip =   np.pi * npl * d * np.cos(thetap) / lamb
   #      phim =   np.pi * npm * d * np.cos(thetam) / lamb
-        phil = [-phip, -phim, phip, phim]  # array of phases
-        Pmat = np.zeros((len(omega), 4, 4), dtype=complex)  # creation of matrix of phases
-        for j in range(4):
-            Pmat[:, j, j] = np.exp(1j * phil[j])  # fill the matrix with the elements plus a row of frequencies
-        return Pmat
+        phil = np.column_stack((-phip, -phim, phip, phim))  # array of phases
+        return np.exp(1j*phil)
 ##################################################################################################################################
 
 
@@ -228,7 +214,8 @@ class TScat:  # creation of the class which computes all is necessary to study a
         for i in range(len(self.d)-2,0,-1):
             a = self.phas[i-1]
             b = self.M12[i-1]
-            vw = np.einsum("wij,wj->wi", b @ a, vw)
+            c = b * a[:,None,:] # b @ A where A_wij = delta_ij a_wj
+            vw = np.einsum("wij,wj->wi", c, vw)
             vw_list[:,:,i-1] = vw
         self.fwd2 = vw_list[:,:,layer]
 
