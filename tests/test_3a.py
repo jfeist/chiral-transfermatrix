@@ -32,8 +32,8 @@ omega = np.linspace(1.8, 2.2, 30)
 ngrid = np.ones_like(omega)
 ######################################################################
 
-def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega):
-    tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
+def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
+    tP =  gammaPR / (1j * (omega - omegaPR) + gammaPR)
     rM = abs(tP)
     phase = tP / rM
     tPM = abs(tP)
@@ -42,84 +42,58 @@ def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega):
     pst = np.exp(1j * phit)
 
     tPP_r = t * pst
-    tMP_r = 0.0j * ngrid
-    tPM_r = tPM * phase
     tMM_r = t * pst
+    if reversed:
+        tMP_r = tPM * phase
+        tPM_r = 0.0j * ngrid
+    else:
+        tMP_r = 0.0j * ngrid
+        tPM_r = tPM * phase
 
     tPP_l = t * pst
-    tMP_l = tPM * phase
-    tPM_l = 0.0j * ngrid
     tMM_l = t * pst
+    if reversed:
+        tMP_l = 0.0j * ngrid
+        tPM_l = tPM * phase
+    else:
+        tMP_l = tPM * phase
+        tPM_l = 0.0j * ngrid
 
-    rPP_r = tPM * pst**4 / phase**3
+    if reversed:
+        rPP_r = 0.0j * ngrid
+        rMM_r = tPM * pst**4 / phase**3
+    else:
+        rPP_r = tPM * pst**4 / phase**3
+        rMM_r = 0.0j * ngrid
     rMP_r = - t / phase**2 * pst**3
     rPM_r = - t / phase**2 * pst**3
-    rMM_r = 0.0j * ngrid
 
-    rPP_l = 0.0j * ngrid
+    if reversed:
+        rPP_l = - tPM * phase
+        rMM_l = 0.0j * ngrid
+    else:
+        rPP_l = 0.0j * ngrid
+        rMM_l = - tPM * phase
     rMP_l = t * phase**2 / pst
     rPM_l = t * phase**2 / pst
-    rMM_l = - tPM * phase
 
-    t1_right = [tPP_r, tMP_r, tPM_r, tMM_r]  # 2x2 scattering matrices
-    t1_left = [tPP_l, tMP_l, tPM_l, tMM_l]
-    r1_right = [rPP_r, rMP_r, rPM_r, rMM_r]
-    r1_left = [rPP_l, rMP_l, rPM_l, rMM_l]
+    t_right = [tPP_r, tMP_r, tPM_r, tMM_r]  # 2x2 scattering matrices
+    t_left = [tPP_l, tMP_l, tPM_l, tMM_l]
+    r_right = [rPP_r, rMP_r, rPM_r, rMM_r]
+    r_left = [rPP_l, rMP_l, rPM_l, rMM_l]
 
-    return [t1_right, t1_left, r1_right, r1_left]
+    return [t_right, t_left, r_right, r_left]
 
-###############################################################
-# DEFINITION OF THE SCATTERING MATRICES FOR PRESERVING MIRROR 1
+######################################################################
+# DEFINITION OF THE SCATTERING MATRICES FOR PRESERVING MIRRORS
 ######################################################################
 omegaPR = 2.0
 gammaPR = 0.05
 
-scatTOT = [chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega)]
-#           chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega)]
+scatTOT = [chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False),
+           chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=True)]
 
 # #####################################################################
-
-# ###############################################################
-# # DEFINITION OF THE SCATTERING MATRICES FOR PRESERVING MIRROR 2
-# ######################################################################
-# omegaPR = 2.0
-# gammaPR = 0.05
-
-tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
-rM  = np.abs(gammaPR / (1j * (omega - omegaPR) + gammaPR))
-phase = tP / rM
-tPM = np.abs(gammaPR / (1j * (omega - omegaPR) + gammaPR))
-t = np.sqrt((1 - np.abs(tPM)**2) / 2.0)
-phit = np.pi / 2
-pst = np.exp(1j * phit)
-
-tPP_r = t * pst
-tMP_r = tPM * phase
-tPM_r = 0.0j * ngrid
-tMM_r = t * pst
-
-tPP_l = t * pst
-tMP_l = 0.0j * ngrid
-tPM_l = tPM * phase
-tMM_l = t * pst
-
-rPP_r = 0.0j * ngrid
-rMP_r = - t * (1 / phase)**2 * (pst**3)
-rPM_r = - t * (1 / phase)**2 * (pst**3)
-rMM_r = tPM * pst**4 * (1 / phase)**3
-
-rPP_l = - tPM * phase
-rMP_l = t * (phase**2) * (1 / pst)
-rPM_l = t * (phase**2) * (1 / pst)
-rMM_l = 0.0j * ngrid
-
-t2_right = [tPP_r, tMP_r, tPM_r, tMM_r]  # 2x2 scattering matrices
-t2_left = [tPP_l, tMP_l, tPM_l, tMM_l]
-r2_right = [rPP_r, rMP_r, rPM_r, rMM_r]
-r2_left = [rPP_l, rMP_l, rPM_l, rMM_l]
-
-scatTOT.append([t2_right,t2_left,r2_right,r2_left])
-###################################################################
 
 l = np.linspace(150, 450, 20)
 ampl = list()
