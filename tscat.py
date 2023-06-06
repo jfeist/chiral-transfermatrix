@@ -17,11 +17,11 @@ class TScat:  # creation of the class which computes all is necessary to study a
 ####################################################
 # INITIALIZER OF THE CLASS WITH THE INPUT PARAMETERS
 ############################################################################################################################################################
-    def __init__(self, theta0, n, mu, k, d, omega, mat):  # initializer of the class ##da estendere per un numero di layer arbitrari
+    def __init__(self, theta0, n, mu, k, d, omega, mat):  # initializer of the class
         for i, strmat in enumerate(mat):
             if not isinstance(strmat, str):
                n[i] = np.ones_like(omega,dtype=complex)
-        self.mat = mat # material names or scattering matrices
+        self.mat = mat # material names or transfer matrices
         self.n = np.asarray(n, dtype=complex)  # array of refractive indices of media
         self.mu = np.asarray(mu, dtype=complex)
         self.k = np.asarray(k, dtype=complex)  # array of chiral parameters of media
@@ -48,8 +48,8 @@ class TScat:  # creation of the class which computes all is necessary to study a
         thetatp[0, :] = self.theta0  # first entry is the incident angle for theta+
         thetatm[0, :] = self.theta0  # first entry is the incident angle for theta-
         for i in range(len(d) - 1):  # cycle to fill the refractive angles
-            thetatp[i + 1, :] = thetar(self.npl[i, :], self.npl[i + 1, :], thetatp[i, :])
-            thetatm[i + 1, :] = thetar(self.npm[i, :], self.npm[i + 1, :], thetatm[i, :])
+            thetatp[i+1, :] = thetar(self.npl[i, :], self.npl[i+1, :], thetatp[i, :])
+            thetatm[i+1, :] = thetar(self.npm[i, :], self.npm[i+1, :], thetatm[i, :])
         self.thetatp=thetatp
         self.thetatm=thetatm
 ############################################################################################################################
@@ -84,22 +84,22 @@ class TScat:  # creation of the class which computes all is necessary to study a
 #############################################################
 # MULTIPLICATION OF TRANSFER MATRICES FOR MULTIPLE INTERFACES
 #######################################################################################
-        S = self.M12[0] # S of the single interface
+        M = self.M12[0] # S of the single interface
         for i in range(len(d) - 2):  # cycle to add a phase and a successive interface
             a = self.phas[i]
-            b = self.M12[i + 1]
+            b = self.M12[i+1]
             c = a[:,:,None] * b # A @ b where A_wij = delta_ij a_wj
-            S = S @ c
-        self.S = S
+            M = M @ c
+        self.M = M
 #######################################################################################
 
 ############################################################################################################################
 # CONSTRUCTION OF 2X2 TRANSMISSION AND REFLECTION MATRICES (FOR LIGHT PROPAGATION FROM LEFT TO RIGHT AND FROM RIGHT TO LEFT)
 ############################################################################################################################
-        tt  = self.S[:, 0:2, 0:2]  # transmission block upper left
-        trp = self.S[:, 0:2, 2:4]  # reflection block upper right
-        tr  = self.S[:, 2:4, 0:2]  # reflection block lower left
-        ttp = self.S[:, 2:4, 2:4]  # transmission block lower right
+        tt  = self.M[:, 0:2, 0:2]  # transmission block upper left
+        trp = self.M[:, 0:2, 2:4]  # reflection block upper right
+        tr  = self.M[:, 2:4, 0:2]  # reflection block lower left
+        ttp = self.M[:, 2:4, 2:4]  # transmission block lower right
         tti = np.linalg.inv(tt)  # inversion of transmission block upper left
         self.Rs = tr @ tti  # reflection matrix for incidence from the left
         self.Ts = tti  # transmission matrix for incidence from the left
@@ -134,12 +134,11 @@ class TScat:  # creation of the class which computes all is necessary to study a
         # input coefficients (the reflections are needed to evaluate the outputs)
         cin[:, 0:2] = cinc
         cin[:, 2:4] = np.einsum("wij,wj->wi", self.Rs, cin[:,0:2])
-        vw = np.linalg.solve(self.S, cin) #it is cf!
-        assert vw.shape == (len(omega),4)
+        vw = np.linalg.solve(self.M, cin) #it is cf!
         vw_list[:,:,-1] = vw
         vw = np.einsum("wij,wj->wi", self.M12[-1], vw)
         vw_list[:,:,-2] = vw
-        for i in range(len(self.d)-2,0,-1):
+        for i in range(len(self.d)-2, 0, -1):
             a = self.phas[i-1]
             b = self.M12[i-1]
             c = b * a[:,None,:] # b @ A where A_wij = delta_ij a_wj
@@ -165,8 +164,6 @@ def phase_matrix_diagonal(thetap, thetam, npl, npm, omega, d):
     lamb = 1239.841984332002 / omega  # lambda in nanometers, omega in ev
     phip = 2 * np.pi * npl * d * np.cos(thetap) / lamb  # phase for n+
     phim = 2 * np.pi * npm * d * np.cos(thetam) / lamb  # phase for n-
-#      phip =   np.pi * npl * d * np.cos(thetap) / lamb
-#      phim =   np.pi * npm * d * np.cos(thetam) / lamb
     phil = np.column_stack((-phip, -phim, phip, phim))  # array of phases
     return np.exp(1j*phil)
 ##################################################################################################################################
