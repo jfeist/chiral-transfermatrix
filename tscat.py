@@ -228,24 +228,19 @@ def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
     rMP_l = t * phase**2 / pst
     rPM_l = t * phase**2 / pst
 
-    # 2x2 scattering matrices
-    t_right = [tPP_r, tMP_r, tPM_r, tMM_r]
-    t_left  = [tPP_l, tMP_l, tPM_l, tMM_l]
-    r_right = [rPP_r, rMP_r, rPM_r, rMM_r]
-    r_left  = [rPP_l, rMP_l, rPM_l, rMM_l]
+    # nomega x 2 x 2 scattering matrices
+    t_right = np.column_stack((tPP_r, tMP_r, tPM_r, tMM_r)).reshape(-1,2,2)
+    t_left  = np.column_stack((tPP_l, tMP_l, tPM_l, tMM_l)).reshape(-1,2,2)
+    r_right = np.column_stack((rPP_r, rMP_r, rPM_r, rMM_r)).reshape(-1,2,2)
+    r_left  = np.column_stack((rPP_l, rMP_l, rPM_l, rMM_l)).reshape(-1,2,2)
 
-    return [t_right, t_left, r_right, r_left]
+    return t_right, t_left, r_right, r_left
 
 ##################################################################
 # convert scattering matrix S to transfer matrix M
 #########################################################################################################################################
 def S_to_M(scat): # no mur in this function (no magnetic field)
-    t_right, t_left, r_right, r_left = scat
-
-    Jr = np.array(r_left).T.reshape(-1,2,2)
-    Jt = np.array(t_right).T.reshape(-1,2,2)
-    Jre = np.array(r_right).T.reshape(-1,2,2)
-    Jte = np.array(t_left).T.reshape(-1,2,2)
+    Jt, Jte, Jre, Jr = scat
 
     Mt = np.linalg.inv(Jt)  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
     Mr = Jr @ Mt  # Submatrix 2x2 for the reflection
