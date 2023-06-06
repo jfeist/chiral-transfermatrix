@@ -9,14 +9,32 @@
 import numpy as np
 ##################
 
-class LayerPhysical:
+class MaterialLayer:
     def __init__(self,n,k,mu,d,name=""):
         self.n = np.asarray(n)
         self.k = np.asarray(k)
         self.mu = np.asarray(mu)
         self.d = d
 
-class LayerMatrix:
+        # REFRACTIVE INDICES OF CHIRAL MEDIUM
+        self.npl = self.n * np.sqrt(self.mu) * (1 + self.k)  # refractive index n+
+        self.npm = self.n * np.sqrt(self.mu) * (1 - self.k)  # refractive index n-
+
+    # propagation phase across layer (diagonal of a diagonal matrix)
+    def phase_matrix_diagonal(self, costhetap, costhetam, omega):
+        lamb = 1239.841984332002 / omega  # lambda in nanometers, omega in ev
+        phip = 2 * np.pi * self.npl * self.d * costhetap / lamb  # phase for n+
+        phim = 2 * np.pi * self.npm * self.d * costhetam / lamb  # phase for n-
+        phil = np.column_stack((-phip, -phim, phip, phim))  # array of phases
+        return np.exp(1j*phil)
+
+    # transfer matrix from previous layer to this one
+    def transfer_matrix(self, prev, costhetas):
+        costhetas_prev = np.column_stack(costhetas[0:2])
+        costhetas_self = np.column_stack(costhetas[2:4])
+        return transfer_matrix(prev.n, prev.mu, costhetas_prev, self.n, self.mu, costhetas_self)
+
+class TransferMatrixLayer:
     def __init__(self,M,name=""):
         assert M.ndim == 3
         assert M.shape[1:] == (4,4)
@@ -24,11 +42,18 @@ class LayerMatrix:
         self.nomega = M.shape[0]
 
         # to "pretend" to be a normal layer
-        self.d = 0
+        self.d = 0.
         self.n = np.ones(self.nomega)
-        self.mu = self.n
         self.k = np.zeros(self.nomega)
+        self.mu = self.n
+        self.npl = self.n
+        self.npm = self.n
 
+    def phase_matrix_diagonal(self, nsinthetap, nsinthetam, omega):
+        return np.ones((self.nomega, 4))
+    
+    def transfer_matrix(self, prev, costhetas):
+        return self.M
 
 #######################################################################################################################
 # CLASS FOR THE CHIRAL/ACHIRAL TRANSFER MATRICES TO COMPUTE TRANSMISSION, REFLECTIONS, DCT, DCR IN A MULTILAYER PROBLEM
@@ -38,66 +63,41 @@ class TScat:  # creation of the class which computes all is necessary to study a
 # INITIALIZER OF THE CLASS WITH THE INPUT PARAMETERS
 ############################################################################################################################################################
     def __init__(self, theta0, layers, omega):  # initializer of the class
-        self.n  = np.array([l.n for l in layers])  # array of refractive indices of media
-        self.k  = np.array([l.k for l in layers])  # array of chiral parameters of media
-        self.mu = np.array([l.mu for l in layers]) # array of magnetic permeability of media
-        self.d  = np.array([l.d for l in layers])  # array of lengths of media
-        self.theta0 = theta0 + 0j  # incident angle of the ray of light on the first interface
-#############################################################################################################################################################
+        self.layers = layers
 
-#------------------------------------------------------------------------
-# CORE OF THE CODE WHICH GENERATES THE TRANSMISSIONS, REFLECTIONS AND DCT
-#------------------------------------------------------------------------
+        # Snell's law means that n*sin(theta) is conserved, these are the incoming values
+        self.nsintheta_p = self.layers[0].npl * np.sin(theta0) + 0j
+        self.nsintheta_m = self.layers[0].npm * np.sin(theta0) + 0j
+        # use that cos(theta) = sqrt(1-sin(theta)**2)
+        self.costheta_p = [np.sqrt(1 - (self.nsintheta_p / l.npl)**2) for l in self.layers]
+        self.costheta_m = [np.sqrt(1 - (self.nsintheta_m / l.npm)**2) for l in self.layers]
 
-#####################################
-# REFRACTIVE INDICES OF CHIRAL MEDIUM
-###################################################################################
-        self.npl = self.n * np.sqrt(self.mu) * (1 + self.k)  # refractive index n+
-        self.npm = self.n * np.sqrt(self.mu) * (1 - self.k)  # refractive index n-
-###################################################################################
+        #------------------------------------------------------------------------
+        # CORE OF THE CODE WHICH GENERATES THE TRANSMISSIONS, REFLECTIONS AND DCT
+        #------------------------------------------------------------------------
+        ####################################
+        # CREATION OF A LIST OF MATRIX PHASE
+        ####################################
+        self.phas = []
+        for (l,cosp,cosm) in zip(self.layers[1:-1], self.costheta_p[1:-1], self.costheta_m[1:-1]):
+            self.phas.append(l.phase_matrix_diagonal(cosp, cosm, omega))
 
-##########################################################
-# ARRAY OF THETAS OBTAINED USING SNELL'S LAW, n_i * sin(theta_i) = const = n_0 sin(theta_0)
-############################################################################################################################
-        self.thetatp = np.arcsin(self.npl[0] * np.sin(theta0) / self.npl)
-        self.thetatm = np.arcsin(self.npm[0] * np.sin(theta0) / self.npm)
-############################################################################################################################
-
-####################################
-# CREATION OF A LIST OF MATRIX PHASE
-######################################################################################################################################################################
-        self.phas = []  # list of matrix phases
-        for j in range(1, len(layers) - 1):  # cycle to fill the list with the phase matrix
-            l = layers[j]
-            if isinstance(l,LayerPhysical):
-                self.phas.append(phase_matrix_diagonal(self.thetatp[j], self.thetatm[j], self.npl[j], self.npm[j], omega, self.d[j]))
-            elif isinstance(l,LayerMatrix): # scattering matrix passed directly
-                self.phas.append(np.ones((len(omega), 4)))
-            else:
-                raise ValueError(f"Invalid layer type {layers[j]}")
-#######################################################################################################################################################################
-
-##############################################################################
-# CREATION OF A LIST OF THE INTERFACE TRANSFER MATRIX WITH THE ARRAY OF THETAS
-###########################################################################################################################################################
+        ##############################################################################
+        # CREATION OF A LIST OF THE INTERFACE TRANSFER MATRIX WITH THE ARRAY OF THETAS
+        ##############################################################################
         self.M12 = []  # list of the matrix of a single interface
-        for i in range(len(layers) - 1):  # cycle to fill the list with the array of thetas
-            l = layers[i+1]
-            if isinstance(l,LayerPhysical): # string containing the material name
-                theta12 = [self.thetatp[i+1], self.thetatm[i+1], self.thetatp[i], self.thetatm[i]]
-                 # filling the list with the matrix interface
-                self.M12.append(transfer_matrix(self.n[i+1], self.n[i], self.mu[i], self.mu[i+1], theta12))
-            else: # scattering matrix passed directly
-                self.M12.append(l.M)
+        for i in range(len(self.layers) - 1):  # cycle to fill the list with the array of thetas
+            l1, l2 = self.layers[i], self.layers[i+1]
+            costhetas = (self.costheta_p[i], self.costheta_m[i], self.costheta_p[i+1], self.costheta_m[i+1])
+            # filling the list with the matrix interface
+            self.M12.append(l2.transfer_matrix(l1, costhetas))
 ############################################################################################################################################################
 
 #############################################################
 # MULTIPLICATION OF TRANSFER MATRICES FOR MULTIPLE INTERFACES
 #######################################################################################
         M = self.M12[0] # S of the single interface
-        for i in range(len(layers) - 2):  # cycle to add a phase and a successive interface
-            a = self.phas[i]
-            b = self.M12[i+1]
+        for a,b in zip(self.phas, self.M12[1:]):  # cycle to add a phase and a successive interface
             c = a[:,:,None] * b # A @ b where A_wij = delta_ij a_wj
             M = M @ c
         self.M = M
@@ -138,7 +138,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
 # COMPUTING FIELDS AMPLITUDES IN AN ARBITRARY LAYER
 ##############################################################################################################
     def calc_ampl(self, layer, cinc, omega):
-        vw_list = np.zeros((len(omega), 4, len(self.d)), dtype=complex)
+        vw_list = np.zeros((len(omega), 4, len(self.layers)), dtype=complex)
         cin = np.ones((len(omega), 4), dtype=complex)
 
         # input coefficients (the reflections are needed to evaluate the outputs)
@@ -148,7 +148,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
         vw_list[:,:,-1] = vw
         vw = np.einsum("wij,wj->wi", self.M12[-1], vw)
         vw_list[:,:,-2] = vw
-        for i in range(len(self.d)-2, 0, -1):
+        for i in range(len(self.layers)-2, 0, -1):
             a = self.phas[i-1]
             b = self.M12[i-1]
             c = b * a[:,None,:] # b @ A where A_wij = delta_ij a_wj
@@ -159,30 +159,14 @@ class TScat:  # creation of the class which computes all is necessary to study a
         return self.fwd2
 ###############################################################################################################
 
-#############################################################
-# PHASE MATRIX FOR THE PROPAGATION OF LIGHT INSIDE THE MEDIUM
-#################################################################################################################################
-def phase_matrix_diagonal(thetap, thetam, npl, npm, omega, d):
-    lamb = 1239.841984332002 / omega  # lambda in nanometers, omega in ev
-    phip = 2 * np.pi * npl * d * np.cos(thetap) / lamb  # phase for n+
-    phim = 2 * np.pi * npm * d * np.cos(thetam) / lamb  # phase for n-
-    phil = np.column_stack((-phip, -phim, phip, phim))  # array of phases
-    return np.exp(1j*phil)
-##################################################################################################################################
-
-########################################
-# TRANSFER MATRIX FOR A SINGLE INTERFACE
-#############################################################################################################################
-def transfer_matrix(n2, n1, mu1, mu2, theta):
+# transfer matrix for an interface from material 1 to 2 (left to right)
+def transfer_matrix(n1, mu1, costhetas_1, n2, mu2, costhetas_2):
     et = (n2 / n1) * np.sqrt(mu1 / mu2)  # ratio of impendances
-    theta = np.asarray(theta).T
-    ratiocos = np.cos(theta[:,None,0:2]) / np.cos(theta[:,2:4,None]) # ratio of cosines of the structure of matrix
+    ratiocos = costhetas_2[:,None,:] / costhetas_1[:,:,None] # ratio of cosines of the structure of matrix
     par_tr = np.array([[1,-1],[-1,1]]) # matrix to change the sign of the matrix elements to fill correctly
     Mt = (et[:,None,None] + par_tr) * (1 + par_tr * ratiocos) / 4 # array of the transmission matrix
     Mr = (et[:,None,None] + par_tr) * (1 - par_tr * ratiocos) / 4 # array of the reflection matrix
     return np.block([[Mt,Mr],[Mr,Mt]])
-################################################################################################################################
-
 
 #####
 # DCT
@@ -255,4 +239,4 @@ def S_to_M(scat): # no mur in this function (no magnetic field)
 def chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False):
     S = chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed)
     M = S_to_M(S)
-    return LayerMatrix(M)
+    return TransferMatrixLayer(M)

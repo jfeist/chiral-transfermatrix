@@ -21,7 +21,7 @@ gammaPR = 0.05
 
 mirror_1 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)
 mirror_2 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=True)
-air_infty = ts.LayerPhysical(n=ngrid,k=0*ngrid,mu=ngrid,d=np.inf)
+air_infty = ts.MaterialLayer(n=ngrid,k=0*ngrid,mu=ngrid,d=np.inf)
 
 # #####################################################################
 
@@ -30,7 +30,7 @@ theta0 = 0 # INCIDENT ANGLE
 l = np.linspace(150, 450, 20)
 ampl = list()
 for dist in l:
-    air_cavity = ts.LayerPhysical(n=ngrid,k=0*ngrid,mu=ngrid,d=dist)
+    air_cavity = ts.MaterialLayer(n=ngrid,k=0*ngrid,mu=ngrid,d=dist)
     layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
     tScat = ts.TScat(theta0, layers, omega)
 
@@ -39,7 +39,7 @@ for dist in l:
 #############
 # OBSERVABLES
 #####################################################################################
-ampl2 = np.array(ampl) #.reshape(len(l), len(omega), 4)
+ampl2 = np.array(ampl)
 Elp = ampl2[:, :, 0]
 Elm = ampl2[:, :, 1]
 Erp = ampl2[:, :, 2]

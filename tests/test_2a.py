@@ -37,8 +37,8 @@ gammaPR = 0.05
 
 mirror_1 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)
 mirror_2 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=True)
-air_infty = ts.LayerPhysical(n=ngrid,k=0*ngrid,mu=ngrid,d=np.inf)
-air_thin  = ts.LayerPhysical(n=ngrid,k=0*ngrid,mu=ngrid,d=0.01)
+air_infty = ts.MaterialLayer(n=ngrid,k=0*ngrid,mu=ngrid,d=np.inf)
+air_thin  = ts.MaterialLayer(n=ngrid,k=0*ngrid,mu=ngrid,d=0.01)
 
 coupl = np.linspace(0.0, 1.0, 20)
 
@@ -57,7 +57,7 @@ for coup in coupl:
     epsinf = 2.89
     omegapChiral = coup
     eps4M, n4, k4 = eps_DL(epsinf, omegapChiral, omega, omega0 = 2.0, gamma = 0.05, k0 = 0.0)
-    molecules = ts.LayerPhysical(n=n4,k=k4,mu=ngrid,d=180.)
+    molecules = ts.MaterialLayer(n=n4,k=k4,mu=ngrid,d=180.)
     #########################################################################################
 
     layers = [air_infty, mirror_1, air_thin, molecules, air_thin, mirror_2, air_infty]

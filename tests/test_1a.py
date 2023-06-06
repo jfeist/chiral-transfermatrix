@@ -39,9 +39,9 @@ theta0 = 0.231
 epsinf = 4.77574276
 omegapMirr = 9.48300763
 eps_m, n_m, k_m = eps_DL(epsinf, omegapMirr, omega, omega0 = 0, gamma = 0.17486845, k0 = 0)
-metal_mirror = ts.LayerPhysical(n=n_m,k=k_m,mu=ngrid,d=30)
+metal_mirror = ts.MaterialLayer(n=n_m,k=k_m,mu=ngrid,d=30)
 
-air_infty = ts.LayerPhysical(n=ngrid,k=0*ngrid,mu=ngrid,d=np.inf)
+air_infty = ts.MaterialLayer(n=ngrid,k=0*ngrid,mu=ngrid,d=np.inf)
 
 tScats = []
 omegapChirals = np.linspace(0.0, 1.0, 20)
@@ -49,7 +49,7 @@ for omegapChiral in omegapChirals:
     # CHIRAL MATERIAL
     epsinf = 2.89
     eps3M, n3, k3 = eps_DL(epsinf, omegapChiral, omega, omega0 = 2.0, gamma = 0.05, k0 = 1e-3)
-    molecules = ts.LayerPhysical(n=n3,k=k3,mu=ngrid,d=150.)
+    molecules = ts.MaterialLayer(n=n3,k=k3,mu=ngrid,d=150.)
 
     layers = [air_infty, metal_mirror, molecules, metal_mirror, air_infty]
     tScats.append(ts.TScat(theta0, layers, omega))
