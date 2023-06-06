@@ -61,7 +61,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
         self.phas = []  # list of matrix phases
         for j in range(1, len(d) - 1):  # cycle to fill the list with the phase matrix
             if isinstance(mat[j],str): # string containing the material name
-                self.phas.append(phase_matrix(thetatp[j], thetatm[j], self.npl[j], self.npm[j], omega, d[j]))
+                self.phas.append(phase_matrix_diagonal(thetatp[j], thetatm[j], self.npl[j], self.npm[j], omega, d[j]))
             else: # scattering matrix passed directly
                 self.phas.append(np.ones((len(omega), 4)))
 #######################################################################################################################################################################
@@ -161,7 +161,7 @@ def thetar(n1, n2, theta0):  # n1 is the refractive index of the first medium an
 #############################################################
 # PHASE MATRIX FOR THE PROPAGATION OF LIGHT INSIDE THE MEDIUM
 #################################################################################################################################
-def phase_matrix(thetap, thetam, npl, npm, omega, d):
+def phase_matrix_diagonal(thetap, thetam, npl, npm, omega, d):
     lamb = 1239.841984332002 / omega  # lambda in nanometers, omega in ev
     phip = 2 * np.pi * npl * d * np.cos(thetap) / lamb  # phase for n+
     phim = 2 * np.pi * npm * d * np.cos(thetam) / lamb  # phase for n-
