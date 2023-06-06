@@ -15,24 +15,19 @@ def eps_DL(epsinf, omegap, omega, omega0=0, gamma=0, k0=0):
     # dispersive dielectric function
     n = np.sqrt(eps)
 
-    if k0 != 0:
+    if k0 != 0: # chiral coupling
         k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))
-        # chiral coupling
-        return eps, n, k
-
     else:
-        return eps, n, k0
+        k = k0
+    return eps, n, k
 #################################################################################################
-
 
 ######################################################################
 # RANGE OF OMEGA AND CREATION OF THE CORRESPONDING ARRAY FOR THE INPUT
 ######################################################################
 omega = np.linspace(1.6, 2.4, 30)
-ngrid = np.ones_like((omega))
+ngrid = np.ones_like(omega)
 ######################################################################
-
-scatTOT = list()
 
 ###############################################################
 # DEFINITION OF THE SCATTERING MATRICES FOR PRESERVING MIRROR 1
@@ -40,83 +35,8 @@ scatTOT = list()
 omegaPR = 2.0
 gammaPR = 0.05
 
-tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
-rM =  np.abs(gammaPR / (1j * (omega - omegaPR) + gammaPR))
-phase = tP / rM
-tPM=np.abs(gammaPR / (1j * (omega - omegaPR) + gammaPR))
-t = np.sqrt((1 - np.abs(tPM)**2) / 2.0)
-phit = np.pi / 2
-pst = np.exp(1j * phit)
-
-tPP_r = t * pst
-tMP_r = 0.0j * ngrid
-tPM_r = tPM * phase
-tMM_r = t * pst
-
-tPP_l = t * pst
-tMP_l = tPM * phase
-tPM_l = 0.0j * ngrid
-tMM_l = t * pst
-
-rPP_r = tPM * pst**4 * (1 / phase)**3
-rMP_r = - t * (1 / phase)**2 * (pst**3)
-rPM_r = - t * (1 / phase)**2 * (pst**3)
-rMM_r = 0.0j * ngrid
-
-rPP_l = 0.0j * ngrid
-rMP_l = t * (phase**2) * (1 / pst)
-rPM_l = t * (phase**2) * (1 / pst)
-rMM_l = - tPM * phase
-
-t1_right = [tPP_r, tMP_r, tPM_r, tMM_r]  # 2x2 scattering matrices
-t1_left = [tPP_l, tMP_l, tPM_l, tMM_l]
-r1_right = [rPP_r, rMP_r, rPM_r, rMM_r]
-r1_left = [rPP_l, rMP_l, rPM_l, rMM_l]
-
-scatTOT.append([t1_right, t1_left, r1_right, r1_left])
-#####################################################################
-
-###############################################################
-# DEFINITION OF THE SCATTERING MATRICES FOR PRESERVING MIRROR 2
-######################################################################
-omegaPR = 2.0
-gammaPR = 0.05
-
-tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
-rM  = np.abs(gammaPR / (1j * (omega - omegaPR) + gammaPR))
-phase = tP / rM
-tPM = np.abs(gammaPR / (1j * (omega - omegaPR) + gammaPR))
-t = np.sqrt((1 - np.abs(tPM)**2) / 2.0)
-phit = np.pi / 2
-pst = np.exp(1j * phit)
-
-tPP_r = t * pst
-tMP_r = tPM * phase
-tPM_r = 0.0j * ngrid
-tMM_r = t * pst
-
-tPP_l = t * pst
-tMP_l = 0.0j * ngrid
-tPM_l = tPM * phase
-tMM_l = t * pst
-
-rPP_r = 0.0j * ngrid
-rMP_r = - t * (1 / phase)**2 * (pst**3)
-rPM_r = - t * (1 / phase)**2 * (pst**3)
-rMM_r = tPM * pst**4 * (1 / phase)**3
-
-rPP_l = - tPM * phase
-rMP_l = t * (phase**2) * (1 / pst)
-rPM_l = t * (phase**2) * (1 / pst)
-rMM_l = 0.0j * ngrid
-
-t2_right = [tPP_r, tMP_r, tPM_r, tMM_r]  # 2x2 scattering matrices
-t2_left = [tPP_l, tMP_l, tPM_l, tMM_l]
-r2_right = [rPP_r, rMP_r, rPM_r, rMM_r]
-r2_left = [rPP_l, rMP_l, rPM_l, rMM_l]
-
-scatTOT.append([t2_right,t2_left,r2_right,r2_left])
-###################################################################
+Mmat_1 = ts.chirality_preserving_mirror_transfermatrix(omegaPR,gammaPR,omega,reversed=False)
+Mmat_2 = ts.chirality_preserving_mirror_transfermatrix(omegaPR,gammaPR,omega,reversed=True)
 
 coupl = np.linspace(0.0, 1.0, 20)
 
@@ -127,7 +47,7 @@ Rmlist = []
 DCTlist = []
 DCAlist = []
 
-for i in range(len(coupl)):
+for coup in coupl:
 
     ################
     # INCIDENT ANGLE
@@ -166,7 +86,7 @@ for i in range(len(coupl)):
     # CHIRAL MATERIAL
     #########################################################################################
     epsinf = 2.89
-    omegapChiral = coupl[i]
+    omegapChiral = coup
     eps4M, n4, k4 = eps_DL(epsinf, omegapChiral, omega, omega0 = 2.0, gamma = 0.05, k0 = 0.0)
     mu4 = 1 * ngrid
     k4 = 0 * ngrid
@@ -207,13 +127,13 @@ for i in range(len(coupl)):
     muTOT = [mu1, mu2, mu3, mu4, mu5, mu6, mu7]
     kTOT = [k1, k2, k3, k4, k5, k6, k7]
     dTOT = [d1, d2, d3, dL, d5, d6, d7]
-    matTOT = ['air', scatTOT[0], 'air', 'ChiralMat', 'air', scatTOT[1], 'air']
+    matTOT = ['air', Mmat_1, 'air', 'ChiralMat', 'air', Mmat_2, 'air']
     #############################################################################
 
     ###########################################
     # CALLING OF THE CLASS FOR THE EMPTY CAVITY
     #########################################################################
-    tScat = ts.TScat(theta0, nTOT, muTOT, kTOT, dTOT, omega, matTOT, scatTOT)
+    tScat = ts.TScat(theta0, nTOT, muTOT, kTOT, dTOT, omega, matTOT)
     #########################################################################
 
     Tplist.append(tScat.Tsp)

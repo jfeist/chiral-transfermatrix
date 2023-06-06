@@ -6,78 +6,11 @@ import tscat as ts  # Essential "import" to run TSCAT
 import numpy as np
 ######################################################
 
-
-###################################################################
-# GENERAL DEFINITION OF THE DIELECTRIC FUNCTION AND CHIRAL COUPLING
-################################################################################################
-def eps_DL(epsinf, omegap, omega, omega0=0, gamma=0, k0=0):
-    eps = epsinf + (omegap**2 / ((omega0**2 - omega**2) - 1j * gamma * omega))
-    # dispersive dielectric function
-    n = np.sqrt(eps)
-
-    if k0 != 0:
-        k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))
-        # chiral coupling
-        return eps, n, k
-
-    else:
-        return eps, n, k0
-#################################################################################################
-
-
 ######################################################################
 # RANGE OF OMEGA AND CREATION OF THE CORRESPONDING ARRAY FOR THE INPUT
 ######################################################################
 omega = np.linspace(1.8, 2.2, 30)
 ######################################################################
-
-def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
-    ngrid = np.ones_like(omega)
-    tP =  gammaPR / (1j * (omega - omegaPR) + gammaPR)
-    rM = abs(tP)
-    phase = tP / rM
-    tPM = abs(tP)
-    t = np.sqrt((1 - np.abs(tPM)**2) / 2.0)
-    phit = np.pi / 2
-    pst = np.exp(1j * phit)
-
-    tPP_r = t * pst
-    tMM_r = t * pst
-    tPP_l = t * pst
-    tMM_l = t * pst
-    if reversed:
-        tMP_r = tPM * phase
-        tPM_r = 0.0j * ngrid
-        tMP_l = 0.0j * ngrid
-        tPM_l = tPM * phase
-    else:
-        tMP_r = 0.0j * ngrid
-        tPM_r = tPM * phase
-        tMP_l = tPM * phase
-        tPM_l = 0.0j * ngrid
-
-    if reversed:
-        rPP_r = 0.0j * ngrid
-        rMM_r = tPM * pst**4 / phase**3
-        rPP_l = - tPM * phase
-        rMM_l = 0.0j * ngrid
-    else:
-        rPP_r = tPM * pst**4 / phase**3
-        rMM_r = 0.0j * ngrid
-        rPP_l = 0.0j * ngrid
-        rMM_l = - tPM * phase
-    rMP_r = - t / phase**2 * pst**3
-    rPM_r = - t / phase**2 * pst**3
-    rMP_l = t * phase**2 / pst
-    rPM_l = t * phase**2 / pst
-
-    # 2x2 scattering matrices
-    t_right = [tPP_r, tMP_r, tPM_r, tMM_r]
-    t_left  = [tPP_l, tMP_l, tPM_l, tMM_l]
-    r_right = [rPP_r, rMP_r, rPM_r, rMM_r]
-    r_left  = [rPP_l, rMP_l, rPM_l, rMM_l]
-
-    return [t_right, t_left, r_right, r_left]
 
 ######################################################################
 # DEFINITION OF THE SCATTERING MATRICES FOR PRESERVING MIRRORS
@@ -85,8 +18,8 @@ def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
 omegaPR = 2.0
 gammaPR = 0.05
 
-Smat_1 = chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False)
-Smat_2 = chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=True)
+Mmat_1 = ts.chirality_preserving_mirror_transfermatrix(omegaPR,gammaPR,omega,reversed=False)
+Mmat_2 = ts.chirality_preserving_mirror_transfermatrix(omegaPR,gammaPR,omega,reversed=True)
 
 # #####################################################################
 
@@ -106,7 +39,7 @@ for dist in l:
     # note that since the chirality-preserving mirrors are handled by directly
     # passing the scattering matrices, the parameters d,n,mu,k do not matter for
     # them.
-    mats = [  'air',  Smat_1,   'air',  Smat_2,   'air']
+    mats = [  'air',  Mmat_1,   'air',  Mmat_2,   'air']
     ds   = [ np.inf,      0.,    dist,      0.,  np.inf]
     ns   = [  ngrid,   ngrid,   ngrid,   ngrid,   ngrid]
     mus  = [  ngrid,   ngrid,   ngrid,   ngrid,   ngrid]
