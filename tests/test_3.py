@@ -10,6 +10,7 @@ import numpy as np
 # RANGE OF OMEGA AND CREATION OF THE CORRESPONDING ARRAY FOR THE INPUT
 ######################################################################
 omega = np.linspace(1.8, 2.2, 30)
+ngrid = np.ones_like(omega)
 ######################################################################
 
 ######################################################################
@@ -18,34 +19,20 @@ omega = np.linspace(1.8, 2.2, 30)
 omegaPR = 2.0
 gammaPR = 0.05
 
-Mmat_1 = ts.chirality_preserving_mirror_transfermatrix(omegaPR,gammaPR,omega,reversed=False)
-Mmat_2 = ts.chirality_preserving_mirror_transfermatrix(omegaPR,gammaPR,omega,reversed=True)
+mirror_1 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)
+mirror_2 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=True)
+air_infty = ts.LayerPhysical(n=ngrid,k=0*ngrid,mu=ngrid,d=np.inf)
 
 # #####################################################################
 
 theta0 = 0 # INCIDENT ANGLE
 
-ngrid = np.ones_like(omega)
-
 l = np.linspace(150, 450, 20)
 ampl = list()
 for dist in l:
-    # five layers:
-    # 1) air
-    # 2) chirality-preserving mirror
-    # 3) air
-    # 4) reversed chirality-preserving mirror
-    # 5) air
-    # note that since the chirality-preserving mirrors are handled by directly
-    # passing the scattering matrices, the parameters d,n,mu,k do not matter for
-    # them.
-    mats = [  'air',  Mmat_1,   'air',  Mmat_2,   'air']
-    ds   = [ np.inf,      0.,    dist,      0.,  np.inf]
-    ns   = [  ngrid,   ngrid,   ngrid,   ngrid,   ngrid]
-    mus  = [  ngrid,   ngrid,   ngrid,   ngrid,   ngrid]
-    ks   = [0*ngrid, 0*ngrid, 0*ngrid, 0*ngrid, 0*ngrid]
-
-    tScat = ts.TScat(theta0, ns, mus, ks, ds, omega, mats)
+    air_cavity = ts.LayerPhysical(n=ngrid,k=0*ngrid,mu=ngrid,d=dist)
+    layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
+    tScat = ts.TScat(theta0, layers, omega)
 
     ampl.append(tScat.calc_ampl(2, [1,0], omega))  # field in cavity for an incoming LCP wave
 
