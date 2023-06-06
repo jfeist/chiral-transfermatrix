@@ -127,7 +127,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
 ###################################################
 # COMPUTING FIELDS AMPLITUDES IN AN ARBITRARY LAYER
 ##############################################################################################################
-    def calc_ampl(self, layer, cinc, omega, dlayer=None):
+    def calc_ampl(self, layer, cinc, omega):
         vw_list = np.zeros((len(omega), 4, len(self.d)), dtype=complex)
         cin = np.ones((len(omega), 4), dtype=complex)
 
