@@ -85,8 +85,8 @@ def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
 omegaPR = 2.0
 gammaPR = 0.05
 
-scatTOT = [chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False),
-           chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=True)]
+Smat_1 = chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False)
+Smat_2 = chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=True)
 
 # #####################################################################
 
@@ -97,17 +97,22 @@ ngrid = np.ones_like(omega)
 l = np.linspace(150, 450, 20)
 ampl = list()
 for dist in l:
-    # five layers: air, chirality-preserving mirror, air, reversed
-    # chirality-preserving mirror, air note that since the chirality-preserving
-    # mirrors are handled by directly passing the scattering matrices, the parameters d,n,mu,k do not matter for them.
+    # five layers:
+    # 1) air
+    # 2) chirality-preserving mirror
+    # 3) air
+    # 4) reversed chirality-preserving mirror
+    # 5) air
+    # note that since the chirality-preserving mirrors are handled by directly
+    # passing the scattering matrices, the parameters d,n,mu,k do not matter for
+    # them.
+    mats = [  'air',  Smat_1,   'air',  Smat_2,   'air']
+    ds   = [ np.inf,      0.,    dist,      0.,  np.inf]
+    ns   = [  ngrid,   ngrid,   ngrid,   ngrid,   ngrid]
+    mus  = [  ngrid,   ngrid,   ngrid,   ngrid,   ngrid]
+    ks   = [0*ngrid, 0*ngrid, 0*ngrid, 0*ngrid, 0*ngrid]
 
-    mats = [  'air', 'Custom',   'air', 'Custom',   'air']
-    ds   = [ np.inf,       0.,    dist,       0.,  np.inf]
-    ns   = [  ngrid,    ngrid,   ngrid,    ngrid,   ngrid]
-    mus  = [  ngrid,    ngrid,   ngrid,    ngrid,   ngrid]
-    ks   = [0*ngrid,  0*ngrid, 0*ngrid,  0*ngrid, 0*ngrid]
-
-    tScat = ts.TScat(theta0, ns, mus, ks, ds, omega, mats, scatTOT)
+    tScat = ts.TScat(theta0, ns, mus, ks, ds, omega, mats)
 
     ampl.append(tScat.calc_ampl(2, [1,0], omega))  # field in cavity for an incoming LCP wave
 

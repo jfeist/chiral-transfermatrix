@@ -207,7 +207,7 @@ for i in range(len(coupl)):
     muTOT = [mu1, mu2, mu3, mu4, mu5, mu6, mu7]
     kTOT = [k1, k2, k3, k4, k5, k6, k7]
     dTOT = [d1, d2, d3, dL, d5, d6, d7]
-    matTOT = ['air', 'Custom', 'air', 'ChiralMat', 'air', 'Custom', 'air']
+    matTOT = ['air', scatTOT[0], 'air', 'ChiralMat', 'air', scatTOT[1], 'air']
     #############################################################################
 
     ###########################################

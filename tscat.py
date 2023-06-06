@@ -1,6 +1,6 @@
 
 # TSCAT, a transfer/scattering matrix approach for achiral and chiral multilayers
-# Authors: Lorenzo Mauro and Jacopo Fregoni
+# Authors: Lorenzo Mauro, Jacopo Fregoni, and Johannes Feist
 
 
 ###########
@@ -17,11 +17,11 @@ class TScat:  # creation of the class which computes all is necessary to study a
 ####################################################
 # INITIALIZER OF THE CLASS WITH THE INPUT PARAMETERS
 ############################################################################################################################################################
-    def __init__(self, theta0, n, mu, k, d, omega, mat, scat=0):  # initializer of the class ##da estendere per un numero di layer arbitrari
+    def __init__(self, theta0, n, mu, k, d, omega, mat):  # initializer of the class ##da estendere per un numero di layer arbitrari
         for i, strmat in enumerate(mat):
-            if strmat == "Custom":
+            if not isinstance(strmat, str):
                n[i] = np.ones_like(omega,dtype=complex)
-        self.mat = np.asarray(mat)  # array of magnetic permeabilities of media
+        self.mat = mat # material names or scattering matrices
         self.n = np.asarray(n, dtype=complex)  # array of refractive indices of media
         self.mu = np.asarray(mu, dtype=complex)
         self.k = np.asarray(k, dtype=complex)  # array of chiral parameters of media
@@ -34,7 +34,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
 #------------------------------------------------------------------------
 
 #####################################
-# REFRACTIVE INDECES OF CHIRAL MEDIUM
+# REFRACTIVE INDICES OF CHIRAL MEDIUM
 ###################################################################################
         self.npl = self.n * np.sqrt(self.mu) * (1 + self.k)  # refractive index n+
         self.npm = self.n * np.sqrt(self.mu) * (1 - self.k)  # refractive index n-
@@ -61,25 +61,23 @@ class TScat:  # creation of the class which computes all is necessary to study a
 ######################################################################################################################################################################
         self.phas = []  # list of matrix phases
         for j in range(1, len(d) - 1):  # cycle to fill the list with the phase matrix
-            if mat[j] == "Custom": # string containing the material name
-                self.phas.append(np.ones((len(omega), 4)))
-            else:
+            if isinstance(mat[j],str): # string containing the material name
                 self.phas.append(self.phimat(thetatp[j], thetatm[j], self.npl[j], self.npm[j], omega, d[j]))
+            else: # scattering matrix passed directly
+                self.phas.append(np.ones((len(omega), 4)))
 #######################################################################################################################################################################
 
 
 ##############################################################################
 # CREATION OF A LIST OF THE INTERFACE TRANSFER MATRIX WITH THE ARRAY OF THETAS
 ###########################################################################################################################################################
-        counter_custom=0
         self.M12 = []  # list of the matrix of a single interface
         for i in range(len(d) - 1):  # cycle to fill the list with the array of thetas
-            if mat[i+1] == "Custom": # string containing the following material name
-                self.M12.append(self.buildmatCustom(scat[counter_custom]))  # filling the list with the Preserving Chiral Mirror interface
-                counter_custom += 1
-            else:
+            if isinstance(mat[i+1],str): # string containing the material name
                 theta12 = [thetatp[i + 1], thetatm[i + 1], thetatp[i], thetatm[i]]
                 self.M12.append(self.buildmat(self.n[i + 1], self.n[i], self.mu[i], self.mu[i + 1], theta12)) # filling the list with the matrix interface
+            else: # scattering matrix passed directly
+                self.M12.append(self.buildmatCustom(mat[i+1]))  # filling the list with the Preserving Chiral Mirror interface
 ############################################################################################################################################################
 
 
