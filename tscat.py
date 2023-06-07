@@ -110,30 +110,22 @@ class TScat:
         self.dct_r = calc_dct(self.Tdp, self.Tdm)  # dct for incidence from the right
         self.dcr_r = calc_dct(self.Rdp, self.Rdm)  # dcr for incidence from the right
 
-    ###################################################
-    # COMPUTING FIELDS AMPLITUDES IN AN ARBITRARY LAYER
-    ###################################################
-    def calc_ampl(self, layer, cinc, omega):
-        vw_list = np.zeros((len(omega), 4, len(self.layers)), dtype=complex)
-        cin = np.ones((len(omega), 4), dtype=complex)
+    def calc_ampl(self, layer, cinc):
+        """Computes the amplitudes of the fields in a given layer, given the
+        amplitudes of the incoming fields from the left."""
 
-        # input coefficients (the reflections are needed to evaluate the outputs)
-        cin[:, 0:2] = cinc
-        cin[:, 2:4] = np.einsum("wij,wj->wi", self.Rs, cin[:,0:2])
-        vw = np.linalg.solve(self.M, cin) #it is cf!
-        vw_list[:,:,-1] = vw
-        vw = np.einsum("wij,wj->wi", self.M12[-1], vw)
-        vw_list[:,:,-2] = vw
-        for i in range(len(self.layers)-2, 0, -1):
-            a = self.phas[i-1]
-            b = self.M12[i-1]
-            c = b * a[:,None,:] # b @ A where A_wij = delta_ij a_wj
-            vw = np.einsum("wij,wj->wi", c, vw)
-            vw_list[:,:,i-1] = vw
-        self.fwd2 = vw_list[:,:,layer]
+        # get coefficients on the right for input from the left
+        # this is just the transmitted field, there is no incoming field from the right
+        self.fwd2 = np.zeros(self.M.shape[:2], dtype=complex)
+        self.fwd2[:, 0:2] = np.einsum("wij,wj->wi", self.Ts, np.atleast_2d(cinc))
+
+        # now successively apply the transfer matrices from right to left to get field
+        self.fwd2 = np.einsum("wij,wj->wi", self.M12[-1], self.fwd2)
+        for a,b in zip(self.phas[layer:][::-1], self.M12[layer:-1][::-1]):
+            self.fwd2 = np.einsum("wij,wj->wi", b, a*self.fwd2)
 
         return self.fwd2
-###############################################################################################################
+#########################################################################################
 
 # transfer matrix for an interface from material 1 to 2 (left to right)
 def transfer_matrix(n1, mu1, costhetas_1, n2, mu2, costhetas_2):
