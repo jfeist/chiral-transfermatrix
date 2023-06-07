@@ -2,12 +2,7 @@
 # TSCAT, a transfer/scattering matrix approach for achiral and chiral multilayers
 # Authors: Lorenzo Mauro, Jacopo Fregoni, and Johannes Feist
 
-
-###########
-# LIBRARIES
-##################
 import numpy as np
-##################
 
 class MaterialLayer:
     def __init__(self,n,k,mu,d,name=""):
@@ -15,25 +10,29 @@ class MaterialLayer:
         self.k = np.asarray(k)
         self.mu = np.asarray(mu)
         self.d = d
+        self.name = name
 
         # REFRACTIVE INDICES OF CHIRAL MEDIUM
         npl = self.n * np.sqrt(self.mu) * (1 + self.k)  # refractive index n+
         npm = self.n * np.sqrt(self.mu) * (1 - self.k)  # refractive index n-
+        # nps has indices [omega, polarization]
         self.nps = np.column_stack((npl,npm))
 
     def set_costheta(self, nsinthetas):
-        # use that cos(theta) = sqrt(1-sin(theta)**2)
+        # use that cos(asin(x)) = sqrt(1-x**2)
+        # costhetas has indices [omega, polarization]
         self.costhetas = np.sqrt(1 - (nsinthetas / self.nps)**2)
 
-    # propagation phase across layer (diagonal of a diagonal matrix)
+    # propagation phases across layer (diagonal of a diagonal matrix)
     def phase_matrix_diagonal(self, omega):
-        kd = 0.005067730716156395 * omega * self.d # k in 1/nanometers, omega in eV
-        phip = kd[:,None] * self.nps * self.costhetas
-        #phim = self.npm * kd * self.costhetas[:,1]  # phase for n-
-        phil = np.hstack((-phip, phip))  # array of phases
+        # constant is 1/ħc in units of 1/(eV nm), which converts
+        # from omega in eV (i.e., it is really ħω) to k in nm^-1
+        kd = 0.005067730716156395 * omega * self.d
+        phis = kd[:,None] * self.nps * self.costhetas
+        phil = np.hstack((-phis, phis))  # array of phases
         return np.exp(1j*phil)
 
-    # transfer matrix from previous layer to this one
+    # transfer matrix from previous layer (on the left) to this one
     def transfer_matrix(self, prev):
         return transfer_matrix(prev.n, prev.mu, prev.costhetas,
                                self.n, self.mu, self.costhetas)
@@ -46,32 +45,28 @@ class TransferMatrixLayer:
         self.nomega = M.shape[0]
         self.n = 1.
         self.mu = 1.
+        self.name = name
 
     def set_costheta(self, nsinthetas):
         self.costhetas = np.sqrt(1 - nsinthetas**2)
 
     def phase_matrix_diagonal(self, omega):
         return np.ones((self.nomega, 4))
-    
+
     def transfer_matrix(self, prev):
         return self.M
 
 #######################################################################################################################
 # CLASS FOR THE CHIRAL/ACHIRAL TRANSFER MATRICES TO COMPUTE TRANSMISSION, REFLECTIONS, DCT, DCR IN A MULTILAYER PROBLEM
 #######################################################################################################################
-class TScat:  # creation of the class which computes all is necessary to study a multilayer problem.
-####################################################
-# INITIALIZER OF THE CLASS WITH THE INPUT PARAMETERS
-############################################################################################################################################################
-    def __init__(self, theta0, layers, omega):  # initializer of the class
+class TScat:
+    def __init__(self, theta0, layers, omega):
         self.layers = layers
 
         # Snell's law means that n*sin(theta) is conserved, these are the incoming values
         nsinthetas = self.layers[0].nps * np.sin(theta0) + 0j
         for l in layers:
             l.set_costheta(nsinthetas)
-
-        # CORE OF THE CODE WHICH GENERATES THE TRANSMISSIONS, REFLECTIONS AND DCT
 
         # phase propagation factors in each (interior) layer
         self.phas = [l.phase_matrix_diagonal(omega) for l in self.layers[1:-1]]
@@ -85,35 +80,36 @@ class TScat:  # creation of the class which computes all is necessary to study a
             c = a[:,:,None] * b # A @ b where A_wij = delta_ij a_wj
             self.M = self.M @ c
 
-############################################################################################################################
-# CONSTRUCTION OF 2X2 TRANSMISSION AND REFLECTION MATRICES (FOR LIGHT PROPAGATION FROM LEFT TO RIGHT AND FROM RIGHT TO LEFT)
-############################################################################################################################
+        # convert from the transfer matrix (connecting amplitudes on the left and
+        # right of an interface) to the scattering matrix (connecting incoming and
+        # outgoing amplitudes). the matrices are 2x2 blocks, where the index
+        # within each block is for left and right circular polarizations
         tt  = self.M[:, 0:2, 0:2]  # transmission block upper left
         trp = self.M[:, 0:2, 2:4]  # reflection block upper right
         tr  = self.M[:, 2:4, 0:2]  # reflection block lower left
         ttp = self.M[:, 2:4, 2:4]  # transmission block lower right
         tti = np.linalg.inv(tt)  # inversion of transmission block upper left
-        self.Rs = tr @ tti  # reflection matrix for incidence from the left
-        self.Ts = tti  # transmission matrix for incidence from the left
+        self.Rs = tr @ tti    # reflection matrix for incidence from the left
+        self.Ts = tti         # transmission matrix for incidence from the left
         self.Rd = -tti @ trp  # reflection matrix for incidence from the right
         self.Td = ttp - tr @ tti @ trp  # transmission matrix for incidence from the right
-############################################################################################################################
 
-######################################################################################################################
-# CONSTRUCTION OF TRANSMITTANCE, REFLECTANCE, AND DCT (FOR LIGHT PROPAGATION FROM LEFT TO RIGHT AND FROM RIGHT TO LEFT)
-################################################################################################################################
-        self.Tdp, self.Tdm = np.sum(abs(self.Td)**2, axis=1).T # transmittance +/- for incidence from the right
+        #######################################################################################################################
+        # CONSTRUCTION OF TRANSMITTANCE, REFLECTANCE, AND DCT (FOR LIGHT PROPAGATION FROM LEFT TO RIGHT AND FROM RIGHT TO LEFT)
+        #######################################################################################################################
+        # the sum is over polarization of the outgoing field
+        self.Rsp, self.Rsm = np.sum(abs(self.Rs)**2, axis=1).T # reflectance +/- for incidence from the left
         self.Tsp, self.Tsm = np.sum(abs(self.Ts)**2, axis=1).T # transmittance +/- for incidence from the left
         self.Rdp, self.Rdm = np.sum(abs(self.Rd)**2, axis=1).T # reflectance +/- for incidence from the right
-        self.Rsp, self.Rsm = np.sum(abs(self.Rs)**2, axis=1).T # reflectance +/- for incidence from the left
+        self.Tdp, self.Tdm = np.sum(abs(self.Td)**2, axis=1).T # transmittance +/- for incidence from the right
         self.dct_s = calc_dct(self.Tsp, self.Tsm)  # dct for incidence from the left
         self.dcr_s = calc_dct(self.Rsp, self.Rsm)  # dcr for incidence from the left
         self.dct_r = calc_dct(self.Tdp, self.Tdm)  # dct for incidence from the right
         self.dcr_r = calc_dct(self.Rdp, self.Rdm)  # dcr for incidence from the right
-#################################################################################################################################
-###################################################
-# COMPUTING FIELDS AMPLITUDES IN AN ARBITRARY LAYER
-##############################################################################################################
+
+    ###################################################
+    # COMPUTING FIELDS AMPLITUDES IN AN ARBITRARY LAYER
+    ###################################################
     def calc_ampl(self, layer, cinc, omega):
         vw_list = np.zeros((len(omega), 4, len(self.layers)), dtype=complex)
         cin = np.ones((len(omega), 4), dtype=complex)
@@ -145,9 +141,7 @@ def transfer_matrix(n1, mu1, costhetas_1, n2, mu2, costhetas_2):
     Mr = (et[:,None,None] + par_tr) * (1 - par_tr * ratiocos) / 4 # array of the reflection matrix
     return np.block([[Mt,Mr],[Mr,Mt]])
 
-#####
-# DCT
-#################################################################################################
+# differential chiral transmission (or reflection, same formula)
 def calc_dct(Tp, Tm):
     return 2 * (Tp - Tm) / (Tp + Tm)  # Tp is the transmission + and Tm the transmission -
 
@@ -199,9 +193,7 @@ def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
 
     return t_right, t_left, r_right, r_left
 
-##################################################################
 # convert scattering matrix S to transfer matrix M
-#########################################################################################################################################
 def S_to_M(scat): # no mur in this function (no magnetic field)
     Jt, Jte, Jre, Jr = scat
 
@@ -211,8 +203,8 @@ def S_to_M(scat): # no mur in this function (no magnetic field)
     Mte = Jte - Mr @ Jre
 
     return np.block([[Mt,Mre],[Mr,Mte]])
-####################################################################################################################################
 
+# make a TransferMatrixLayer instance for a chirality-preserving mirror
 def chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False):
     S = chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed)
     M = S_to_M(S)
