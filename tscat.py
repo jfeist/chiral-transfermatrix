@@ -4,7 +4,12 @@
 
 import numpy as np
 
-class MaterialLayer:
+class Layer:
+    """A base class for layers"""
+    pass
+
+class MaterialLayer(Layer):
+    """A layer made of a material described by its optical constants and thickness."""
     def __init__(self,n,k,mu,d,name=""):
         self.n = np.asarray(n)
         self.k = np.asarray(k)
@@ -37,7 +42,8 @@ class MaterialLayer:
         return transfer_matrix(prev.n, prev.mu, prev.costhetas,
                                self.n, self.mu, self.costhetas)
 
-class TransferMatrixLayer:
+class TransferMatrixLayer(Layer):
+    """A layer with a fixed transfer matrix (assumed to be from and to air)."""
     def __init__(self,M,name=""):
         assert M.ndim == 3
         assert M.shape[1:] == (4,4)
@@ -56,10 +62,8 @@ class TransferMatrixLayer:
     def transfer_matrix(self, prev):
         return self.M
 
-#######################################################################################################################
-# CLASS FOR THE CHIRAL/ACHIRAL TRANSFER MATRICES TO COMPUTE TRANSMISSION, REFLECTIONS, DCT, DCR IN A MULTILAYER PROBLEM
-#######################################################################################################################
 class TScat:
+    """A multilayer made of a sequence of layers. Calculates the scattering properties upon instantiation."""
     def __init__(self, theta0, layers, omega):
         self.layers = layers
 
@@ -94,9 +98,8 @@ class TScat:
         self.Rd = -tti @ trp  # reflection matrix for incidence from the right
         self.Td = ttp - tr @ tti @ trp  # transmission matrix for incidence from the right
 
-        #######################################################################################################################
-        # CONSTRUCTION OF TRANSMITTANCE, REFLECTANCE, AND DCT (FOR LIGHT PROPAGATION FROM LEFT TO RIGHT AND FROM RIGHT TO LEFT)
-        #######################################################################################################################
+        # Calculate transmittance, reflectance, and DCT/DCR
+
         # the sum is over polarization of the outgoing field
         self.Rsp, self.Rsm = np.sum(abs(self.Rs)**2, axis=1).T # reflectance +/- for incidence from the left
         self.Tsp, self.Tsm = np.sum(abs(self.Ts)**2, axis=1).T # transmittance +/- for incidence from the left
