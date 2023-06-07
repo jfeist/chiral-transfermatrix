@@ -200,7 +200,7 @@ class TScat:  # creation of the class which computes all is necessary to study a
 # PHASE MATRIX FOR THE PROPAGATION OF LIGHT INSIDE THE MEDIUM
 #################################################################################################################################
     def phimat(self, thetap, thetam, npl, npm, omega, d, mat):  
-        lamb = 1239.842 / omega  # lambda in nanometers, omega in ev
+        lamb = 1239.841984332002 / omega  # lambda in nanometers, omega in ev
         phip = 2 * np.pi * npl * d * np.cos(thetap) / lamb  # phase for n+
         phim = 2 * np.pi * npm * d * np.cos(thetam) / lamb  # phase for n-
   #      phip =   np.pi * npl * d * np.cos(thetap) / lamb  
