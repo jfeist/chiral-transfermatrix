@@ -34,7 +34,7 @@ for dist in l:
     layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
     tScat = ts.TScat(theta0, layers, omega)
 
-    ampl.append(tScat.calc_ampl(2, [1,0]))  # field in cavity for an incoming LCP wave
+    ampl.append(tScat.field_ampl(2, [1,0]))  # field in cavity for an incoming LCP wave
 
 #############
 # OBSERVABLES

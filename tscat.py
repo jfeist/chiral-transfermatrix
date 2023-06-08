@@ -110,16 +110,21 @@ class TScat:
         self.dct_r = calc_dct(self.Tdp, self.Tdm)  # dct for incidence from the right
         self.dcr_r = calc_dct(self.Rdp, self.Rdm)  # dcr for incidence from the right
 
-    def calc_ampl(self, layer, cinc):
-        """Computes the amplitudes of the fields in a given layer, given the
-        amplitudes of the incoming fields from the left."""
+    def field_ampl(self, layer, cinc):
+        """Computes the amplitudes of the fields in a given layer (at the
+        right end), given the amplitudes of the incoming fields from the
+        left."""
 
         # get coefficients on the right for input from the left
         # this is just the transmitted field, there is no incoming field from the right
         self.fwd2 = np.zeros(self.M.shape[:2], dtype=complex)
         self.fwd2[:, 0:2] = np.einsum("wij,wj->wi", self.Ts, np.atleast_2d(cinc))
 
-        # now successively apply the transfer matrices from right to left to get field
+        if layer==len(self.layers)-1:
+            return self.fwd2
+
+        # now successively apply the transfer matrices from right to left to get
+        # the field amplitude on the right of each layer
         self.fwd2 = np.einsum("wij,wj->wi", self.M12[-1], self.fwd2)
         for a,b in zip(self.phas[layer:][::-1], self.M12[layer:-1][::-1]):
             self.fwd2 = np.einsum("wij,wj->wi", b, a*self.fwd2)
