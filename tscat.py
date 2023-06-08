@@ -1,6 +1,8 @@
+"""TSCAT, a transfer/scattering matrix approach for achiral and chiral multilayers by Lorenzo Mauro, Jacopo Fregoni, Johannes Feist, and Remi Avriller"""
 
-# TSCAT, a transfer/scattering matrix approach for achiral and chiral multilayers
-# Authors: Lorenzo Mauro, Jacopo Fregoni, and Johannes Feist
+__version__ = '0.1.0'
+
+__all__ = ['MaterialLayer', 'TransferMatrixLayer', 'TScat', 'chirality_preserving_mirror']
 
 import numpy as np
 
