@@ -2,12 +2,12 @@ import tscat as ts
 import numpy as np
 
 def eps_DL(omega, epsinf, omegap, omega0=0, gamma=0, k0=0):
-    eps = epsinf + (omegap**2 / ((omega0**2 - omega**2) - 1j * gamma * omega))
-    if k0 != 0: # chiral coupling
-        k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))
-    else:
-        k = np.zeros_like(omega)
-    return eps, np.sqrt(eps), k
+    """Drude-Lorentz model for the dielectric function of a material."""
+    res = omegap**2 / (omega0**2 - omega**2 - 1j * gamma * omega)
+    eps = epsinf + res
+    n = np.sqrt(eps)
+    k = 0*eps if k0==0 else k0 * omega / omega0 * res
+    return eps, n, k
 
 omega = np.linspace(1.6, 2.4, 30)  # Omega in eV
 theta0 = 0
