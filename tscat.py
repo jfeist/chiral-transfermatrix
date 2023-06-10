@@ -152,7 +152,8 @@ def calc_dct(Tp, Tm):
     """differential chiral transmission or reflection"""
     return 2 * (Tp - Tm) / (Tp + Tm)  # Tp is the transmission + and Tm the transmission -
 
-def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
+def chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False):
+    """make a TransferMatrixLayer instance for a chirality-preserving mirror."""
     tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
     rM = abs(tP)
     phase = tP / rM
@@ -184,21 +185,12 @@ def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
     t_left  = np.column_stack((tPP_l, tMP_l, tPM_l, tMM_l)).reshape(mshape)
     r_right = np.column_stack((rPP_r, rMP_r, rPM_r, rMM_r)).reshape(mshape)
     r_left  = np.column_stack((rPP_l, rMP_l, rPM_l, rMM_l)).reshape(mshape)
-    return t_right, t_left, r_right, r_left
 
-def S_to_M(scat):
-    """convert scattering matrix S to transfer matrix M"""
-    Jt, Jte, Jre, Jr = scat
+    # convert from scattering matrix S to transfer matrix M
+    Mt = np.linalg.inv(t_right)  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
+    Mr = r_left @ Mt  # Submatrix 2x2 for the reflection
+    Mre = -Mt @ r_right  # Submatrix 2x2 for the reflection on the opposite side
+    Mte = t_left - Mr @ r_right
 
-    Mt = np.linalg.inv(Jt)  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
-    Mr = Jr @ Mt  # Submatrix 2x2 for the reflection
-    Mre = -Mt @ Jre  # Submatrix 2x2 for the reflection on the opposite side
-    Mte = Jte - Mr @ Jre
-
-    return np.block([[Mt,Mre],[Mr,Mte]])
-
-def chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False):
-    """make a TransferMatrixLayer instance for a chirality-preserving mirror."""
-    S = chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed)
-    M = S_to_M(S)
+    M = np.block([[Mt,Mre],[Mr,Mte]])
     return TransferMatrixLayer(M)
