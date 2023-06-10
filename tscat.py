@@ -80,7 +80,8 @@ class TScat:
 
         # total transfer matrix
         self.M = self.M12[0] # M of the first interface
-        for a,b in zip(self.phas, self.M12[1:]): # cycle to add a phase and a successive interface
+        # cycle to add a phase and a successive interface
+        for a,b in zip(self.phas, self.M12[1:]):
             c = a[...,None] * b # A @ b where A_[...]ij = delta_ij a_[...]j
             self.M = self.M @ c
 
@@ -96,15 +97,17 @@ class TScat:
         self.Rs = tr @ tti    # reflection matrix for incidence from the left
         self.Ts = tti         # transmission matrix for incidence from the left
         self.Rd = -tti @ trp  # reflection matrix for incidence from the right
-        self.Td = ttp - tr @ tti @ trp  # transmission matrix for incidence from the right
+        self.Td = ttp + tr @ self.Rd # transmission matrix for incidence from the right
 
         # Calculate transmittance, reflectance, and DCT/DCR
 
-        # the sum is over polarization of the outgoing field
-        self.Rsp, self.Rsm = np.moveaxis(np.sum(abs(self.Rs)**2, axis=-2), -1, 0) # reflectance +/- for incidence from the left
-        self.Tsp, self.Tsm = np.moveaxis(np.sum(abs(self.Ts)**2, axis=-2), -1, 0) # transmittance +/- for incidence from the left
-        self.Rdp, self.Rdm = np.moveaxis(np.sum(abs(self.Rd)**2, axis=-2), -1, 0) # reflectance +/- for incidence from the right
-        self.Tdp, self.Tdm = np.moveaxis(np.sum(abs(self.Td)**2, axis=-2), -1, 0) # transmittance +/- for incidence from the right
+        # sum probabilities over polarization of the outgoing field and return
+        # with input polarization as first index
+        polarization_sums = lambda x: np.moveaxis(np.sum(abs(x)**2, axis=-2), -1, 0)
+        self.Tsp, self.Tsm = polarization_sums(self.Ts) # transmittance +/- for incidence from the left
+        self.Rsp, self.Rsm = polarization_sums(self.Rs) # reflectance   +/- for incidence from the left
+        self.Tdp, self.Tdm = polarization_sums(self.Td) # transmittance +/- for incidence from the right
+        self.Rdp, self.Rdm = polarization_sums(self.Rd) # reflectance   +/- for incidence from the right
         self.dct_s = calc_dct(self.Tsp, self.Tsm)  # dct for incidence from the left
         self.dcr_s = calc_dct(self.Rsp, self.Rsm)  # dcr for incidence from the left
         self.dct_r = calc_dct(self.Tdp, self.Tdm)  # dct for incidence from the right
