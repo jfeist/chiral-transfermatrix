@@ -5,23 +5,21 @@ __version__ = '0.1.0'
 __all__ = ['MaterialLayer', 'TransferMatrixLayer', 'TScat', 'chirality_preserving_mirror']
 
 import numpy as np
-from numba import jit
 
 #########################
 # Helper functions      #
 #########################
 
-@jit(nopython=True)
 def inv_multi_2x2(A):
     """same calculation as np.linalg.inv(A[...,:2,:2])"""
     Bshape = A.shape[:-2] + (2,2)
     A = A.reshape(-1,A.shape[-2],A.shape[-1])
     B = np.empty((A.shape[0],2,2),dtype=A.dtype)
-    for a,b in zip(A,B):
-        # adapted from https://github.com/JuliaArrays/StaticArrays.jl/blob/master/src/inv.jl
-        idet = 1/(a[0,0]*a[1,1] - a[0,1]*a[1,0])
-        b[0] = ( a[1,1]*idet, -a[0,1]*idet)
-        b[1] = (-a[1,0]*idet,  a[0,0]*idet)
+    idet = 1/(A[:,0,0]*A[:,1,1] - A[:,0,1]*A[:,1,0])
+    B[:,0,0] =  A[:,1,1]*idet
+    B[:,0,1] = -A[:,0,1]*idet
+    B[:,1,0] = -A[:,1,0]*idet
+    B[:,1,1] =  A[:,0,0]*idet
     return B.reshape(Bshape)
 
 def transfer_matrix(n1, mu1, costhetas_1, n2, mu2, costhetas_2):
