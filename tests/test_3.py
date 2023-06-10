@@ -11,8 +11,8 @@ omegaPR = 2.0
 gammaPR = 0.05
 mirror_1 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)
 mirror_2 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=True)
-air_infty = ts.MaterialLayer(n=1,k=0,mu=1,d=np.inf)
-air_cavity = ts.MaterialLayer(n=1,k=0,mu=1,d=l)
+air_infty = ts.MaterialLayer(eps=1,k=0,mu=1,d=np.inf)
+air_cavity = ts.MaterialLayer(eps=1,k=0,mu=1,d=l)
 layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
 
 theta0 = 0 # INCIDENT ANGLE

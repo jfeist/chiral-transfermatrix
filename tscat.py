@@ -1,4 +1,6 @@
-"""TSCAT, a transfer/scattering matrix approach for achiral and chiral multilayers by Lorenzo Mauro, Jacopo Fregoni, Johannes Feist, and Remi Avriller"""
+"""tscat is a transfer/scattering matrix package for achiral and chiral multilayers
+
+authors: Lorenzo Mauro, Jacopo Fregoni, Remi Avriller, and Johannes Feist"""
 
 __version__ = '0.1.0'
 
@@ -22,9 +24,9 @@ def inv_multi_2x2(A):
     B[:,1,1] =  A[:,0,0]*idet
     return B.reshape(Bshape)
 
-def transfer_matrix(n1, mu1, costhetas_1, n2, mu2, costhetas_2):
-    """transfer matrix for an interface from material 1 to 2 (left to right)"""
-    et = (n2 / n1) * np.sqrt(mu1 / mu2)  # ratio of impendances
+def transfer_matrix(eps1, mu1, costhetas_1, eps2, mu2, costhetas_2):
+    """transfer matrix for an interface from material 1 to 2"""
+    et = np.sqrt((eps2 * mu1) / (eps1 * mu2)) # ratio of impendances
     ratiocos = costhetas_2[...,None,:] / costhetas_1[...,:,None] # ratio of cosines of the structure of matrix
     par_tr = np.array([[1,-1],[-1,1]]) # matrix to change the sign of the matrix elements to fill correctly
     Mt = (et[...,None,None] + par_tr) * (1 + par_tr * ratiocos) / 4 # array of the transmission matrix
@@ -45,16 +47,16 @@ class Layer:
 
 class MaterialLayer(Layer):
     """A layer made of a material described by its optical constants and thickness."""
-    def __init__(self,n,k,mu,d,name=""):
-        self.n = np.atleast_1d(n)
+    def __init__(self,eps,k,mu,d,name=""):
+        self.eps = np.atleast_1d(eps)
         self.k = np.atleast_1d(k)
         self.mu = np.atleast_1d(mu)
         self.d = np.atleast_1d(d)
         self.name = name
 
         # REFRACTIVE INDICES OF CHIRAL MEDIUM
-        npl = self.n * np.sqrt(self.mu) * (1 + self.k)  # refractive index n+
-        npm = self.n * np.sqrt(self.mu) * (1 - self.k)  # refractive index n-
+        npl = np.sqrt(self.eps*self.mu) * (1 + self.k)  # refractive index n+
+        npm = np.sqrt(self.eps*self.mu) * (1 - self.k)  # refractive index n-
         # nps has indices [input_indices..., polarization]
         self.nps = np.stack((npl,npm),axis=-1)
 
@@ -74,15 +76,15 @@ class MaterialLayer(Layer):
 
     def transfer_matrix(self, prev):
         """transfer matrix from previous layer (on the left) to this one"""
-        return transfer_matrix(prev.n, prev.mu, prev.costhetas,
-                               self.n, self.mu, self.costhetas)
+        return transfer_matrix(prev.eps, prev.mu, prev.costhetas,
+                               self.eps, self.mu, self.costhetas)
 
 class TransferMatrixLayer(Layer):
     """A layer with a fixed transfer matrix (assumed to be from and to air)."""
     def __init__(self,M,name=""):
         assert M.shape[-2:] == (4,4)
         self.M = M
-        self.n = 1.
+        self.eps = 1.
         self.mu = 1.
         self.name = name
 
