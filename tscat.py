@@ -30,8 +30,8 @@ class MaterialLayer(Layer):
         # costhetas has indices [input_indices..., polarization]
         self.costhetas = np.sqrt(1 - (nsinthetas / self.nps)**2)
 
-    # propagation phases across layer (diagonal of a diagonal matrix)
     def phase_matrix_diagonal(self, omega):
+        """propagation phases across layer (diagonal of a diagonal matrix)"""
         # constant is 1/ħc in units of 1/(eV nm), which converts
         # from omega in eV (i.e., it is really ħω) to k in nm^-1
         kd = 0.005067730716156395 * omega * self.d
@@ -39,8 +39,8 @@ class MaterialLayer(Layer):
         phil = np.concatenate((-phis, phis), axis=-1)  # array of phases
         return np.exp(1j*phil)
 
-    # transfer matrix from previous layer (on the left) to this one
     def transfer_matrix(self, prev):
+        """transfer matrix from previous layer (on the left) to this one"""
         return transfer_matrix(prev.n, prev.mu, prev.costhetas,
                                self.n, self.mu, self.costhetas)
 
@@ -136,8 +136,8 @@ class TScat:
         return self.fwd2
 #########################################################################################
 
-# transfer matrix for an interface from material 1 to 2 (left to right)
 def transfer_matrix(n1, mu1, costhetas_1, n2, mu2, costhetas_2):
+    """transfer matrix for an interface from material 1 to 2 (left to right)"""
     et = (n2 / n1) * np.sqrt(mu1 / mu2)  # ratio of impendances
     ratiocos = costhetas_2[...,None,:] / costhetas_1[...,:,None] # ratio of cosines of the structure of matrix
     par_tr = np.array([[1,-1],[-1,1]]) # matrix to change the sign of the matrix elements to fill correctly
@@ -145,8 +145,8 @@ def transfer_matrix(n1, mu1, costhetas_1, n2, mu2, costhetas_2):
     Mr = (et[...,None,None] + par_tr) * (1 - par_tr * ratiocos) / 4 # array of the reflection matrix
     return np.block([[Mt,Mr],[Mr,Mt]])
 
-# differential chiral transmission (or reflection, same formula)
 def calc_dct(Tp, Tm):
+    """differential chiral transmission or reflection"""
     return 2 * (Tp - Tm) / (Tp + Tm)  # Tp is the transmission + and Tm the transmission -
 
 def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
@@ -183,8 +183,8 @@ def chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed=False):
     r_left  = np.column_stack((rPP_l, rMP_l, rPM_l, rMM_l)).reshape(mshape)
     return t_right, t_left, r_right, r_left
 
-# convert scattering matrix S to transfer matrix M
 def S_to_M(scat):
+    """convert scattering matrix S to transfer matrix M"""
     Jt, Jte, Jre, Jr = scat
 
     Mt = np.linalg.inv(Jt)  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
@@ -194,8 +194,8 @@ def S_to_M(scat):
 
     return np.block([[Mt,Mre],[Mr,Mte]])
 
-# make a TransferMatrixLayer instance for a chirality-preserving mirror
 def chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False):
+    """make a TransferMatrixLayer instance for a chirality-preserving mirror."""
     S = chirality_preserving_mirror_scatmat(omegaPR,gammaPR,omega,reversed)
     M = S_to_M(S)
     return TransferMatrixLayer(M)
