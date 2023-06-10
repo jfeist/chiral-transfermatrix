@@ -1,49 +1,30 @@
-###########
-# LIBRARIES
-######################################################
-import tscat as ts  # Essential "import" to run TSCAT
-
+import tscat as ts
 import numpy as np
-######################################################
 
-######################################################################
-# RANGE OF OMEGA AND CREATION OF THE CORRESPONDING ARRAY FOR THE INPUT
-######################################################################
+# we want to scan over frequency omega, and cavity length l, as two different
+# axis. TScat is "transparent" to numpy broadcasting, so we can just make omega
+# a 1D array and l a 2D array (shape nl x 1), and numpy will take care of the
+# rest. The results will be 2D arrays of shape nl x nomega
 omega = np.linspace(1.8, 2.2, 30)
-ngrid = np.ones_like(omega)
-######################################################################
-
-######################################################################
-# DEFINITION OF THE SCATTERING MATRICES FOR PRESERVING MIRRORS
-######################################################################
+l = np.linspace(150, 450, 20)[:,None]
 omegaPR = 2.0
 gammaPR = 0.05
-
 mirror_1 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)
 mirror_2 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=True)
-air_infty = ts.MaterialLayer(n=ngrid,k=0*ngrid,mu=ngrid,d=np.inf)
-
-# #####################################################################
+air_infty = ts.MaterialLayer(n=1,k=0,mu=1,d=np.inf)
+air_cavity = ts.MaterialLayer(n=1,k=0,mu=1,d=l)
+layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
 
 theta0 = 0.231 # INCIDENT ANGLE
 
-l = np.linspace(150, 450, 20)
-ampl = list()
-for dist in l:
-    air_cavity = ts.MaterialLayer(n=ngrid,k=0*ngrid,mu=ngrid,d=dist)
-    layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
-    tScat = ts.TScat(theta0, layers, omega)
+tScat = ts.TScat(theta0, layers, omega)
 
-    ampl.append(tScat.field_ampl(2, [1,0]))  # field in cavity for an incoming LCP wave
+ampl = tScat.field_ampl(2, [1,0])  # field in cavity for an incoming LCP wave
 
-#############
-# OBSERVABLES
-#####################################################################################
-ampl2 = np.array(ampl)
-Elp = ampl2[:, :, 0]
-Elm = ampl2[:, :, 1]
-Erp = ampl2[:, :, 2]
-Erm = ampl2[:, :, 3]
+Elp = ampl[:, :, 0]
+Elm = ampl[:, :, 1]
+Erp = ampl[:, :, 2]
+Erm = ampl[:, :, 3]
 lcp = abs(Elp)**2 + abs(Erp)**2  # total LCP in layer 2 (inside the cavity)
 rcp = abs(Elm)**2 + abs(Erm)**2  # total RCP in layer 2 (inside the cavity)
 #####################################################################################

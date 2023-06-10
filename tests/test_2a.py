@@ -1,92 +1,45 @@
-###########
-# LIBRARIES
-######################################################
-import tscat as ts  # Essential "import" to run TSCAT
-
+import tscat as ts
 import numpy as np
-######################################################
 
-
-###################################################################
-# GENERAL DEFINITION OF THE DIELECTRIC FUNCTION AND CHIRAL COUPLING
-################################################################################################
-def eps_DL(epsinf, omegap, omega, omega0=0, gamma=0, k0=0):
+def eps_DL(omega, epsinf, omegap, omega0=0, gamma=0, k0=0):
     eps = epsinf + (omegap**2 / ((omega0**2 - omega**2) - 1j * gamma * omega))
-    # dispersive dielectric function
-    n = np.sqrt(eps)
-
     if k0 != 0: # chiral coupling
         k = k0 * (omegap**2 * omega / (omega0 * ((omega0**2 - omega**2) - 1j * gamma * omega)))
     else:
         k = np.zeros_like(omega)
-    return eps, n, k
-#################################################################################################
+    return eps, np.sqrt(eps), k
 
-######################################################################
-# RANGE OF OMEGA AND CREATION OF THE CORRESPONDING ARRAY FOR THE INPUT
-######################################################################
 omega = np.linspace(1.6, 2.4, 30)
-ngrid = np.ones_like(omega)
-######################################################################
+theta0 = 0.231
 
-###############################################################
-# DEFINITION OF THE SCATTERING MATRICES FOR PRESERVING MIRROR 1
-######################################################################
 omegaPR = 2.0
 gammaPR = 0.05
 
 mirror_1 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)
 mirror_2 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=True)
-air_infty = ts.MaterialLayer(n=ngrid,k=0*ngrid,mu=ngrid,d=np.inf)
-air_thin  = ts.MaterialLayer(n=ngrid,k=0*ngrid,mu=ngrid,d=0.01)
+air_infty = ts.MaterialLayer(n=1,k=0,mu=1,d=np.inf)
+air_thin  = ts.MaterialLayer(n=1,k=0,mu=1,d=0.01)
 
-coupl = np.linspace(0.0, 1.0, 20)
+# we want to scan over the resonance strength omegapChiral AND the frequency
+# omega (i.e., output should be 100x100), so make this a 100x1 2D array
+# numpy broadcasting will take care of the rest (i.e., omega will be the second axis)
+omegapChiral = np.linspace(0.0, 1.0, 20)[:,None]
+eps_mol, n_mol, k_mol = eps_DL(omega, epsinf=2.89, omegap=omegapChiral, omega0=2.0, gamma=0.05, k0=0.0)
+molecules = ts.MaterialLayer(n=n_mol,k=k_mol,mu=1,d=180.)
 
-tScats = []
-for coup in coupl:
+layers = [air_infty, mirror_1, air_thin, molecules, air_thin, mirror_2, air_infty]
 
-    ################
-    # INCIDENT ANGLE
-    ################
-    theta0 = 0.231
-    ################
-
-    #################
-    # CHIRAL MATERIAL
-    #########################################################################################
-    epsinf = 2.89
-    omegapChiral = coup
-    eps4M, n4, k4 = eps_DL(epsinf, omegapChiral, omega, omega0 = 2.0, gamma = 0.05, k0 = 0.0)
-    molecules = ts.MaterialLayer(n=n4,k=k4,mu=ngrid,d=180.)
-    #########################################################################################
-
-    layers = [air_infty, mirror_1, air_thin, molecules, air_thin, mirror_2, air_infty]
-
-    ###########################################
-    # CALLING OF THE CLASS FOR THE EMPTY CAVITY
-    #########################################################################
-    tScats.append(ts.TScat(theta0, layers, omega))
-    #########################################################################
-
-#############
-# OBSERVABLES
-#######################
-arr1 = np.array([ts.Tsp for ts in tScats])
-arr2 = np.array([ts.Tsm for ts in tScats])
-arr3 = np.array([ts.Rsp for ts in tScats])
-arr4 = np.array([ts.Rsm for ts in tScats])
-arr5 = np.array([ts.dct_s for ts in tScats])
-#######################
+tScat = ts.TScat(theta0, layers, omega)
 
 # np.savez_compressed('tests/test_2a.npz', omega=omega, coupl=coupl, Tplist=arr1, Tmlist=arr2, Rplist=arr3, Rmlist=arr4, DCTlist=arr5)
 def test_2a():
     ref_data = np.load('tests/test_2a.npz')
     assert np.allclose(omega, ref_data['omega'])
-    assert np.allclose(coupl, ref_data['coupl'])
-    assert np.allclose(arr1, ref_data['Tplist'])
-    assert np.allclose(arr2, ref_data['Tmlist'])
-    assert np.allclose(arr3, ref_data['Rplist'])
-    assert np.allclose(arr4, ref_data['Rmlist'])
-    assert np.allclose(arr5, ref_data['DCTlist'])
+    assert np.allclose(omegapChiral.squeeze(), ref_data['coupl'])
+    assert np.allclose(tScat.Tsp, ref_data['Tplist'])
+    assert np.allclose(tScat.Tsm, ref_data['Tmlist'])
+    assert np.allclose(tScat.Rsp, ref_data['Rplist'])
+    assert np.allclose(tScat.Rsm, ref_data['Rmlist'])
+    assert np.allclose(tScat.dct_s, ref_data['DCTlist'])
 
     print('Test 2a passed!')
