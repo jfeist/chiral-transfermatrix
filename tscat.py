@@ -5,6 +5,41 @@ __version__ = '0.1.0'
 __all__ = ['MaterialLayer', 'TransferMatrixLayer', 'TScat', 'chirality_preserving_mirror']
 
 import numpy as np
+from numba import jit
+
+#########################
+# Helper functions      #
+#########################
+
+@jit(nopython=True)
+def inv_multi_2x2(A):
+    """same calculation as np.linalg.inv(A[...,:2,:2])"""
+    Bshape = A.shape[:-2] + (2,2)
+    A = A.reshape(-1,A.shape[-2],A.shape[-1])
+    B = np.empty((A.shape[0],2,2),dtype=A.dtype)
+    for a,b in zip(A,B):
+        # adapted from https://github.com/JuliaArrays/StaticArrays.jl/blob/master/src/inv.jl
+        idet = 1/(a[0,0]*a[1,1] - a[0,1]*a[1,0])
+        b[0] = ( a[1,1]*idet, -a[0,1]*idet)
+        b[1] = (-a[1,0]*idet,  a[0,0]*idet)
+    return B.reshape(Bshape)
+
+def transfer_matrix(n1, mu1, costhetas_1, n2, mu2, costhetas_2):
+    """transfer matrix for an interface from material 1 to 2 (left to right)"""
+    et = (n2 / n1) * np.sqrt(mu1 / mu2)  # ratio of impendances
+    ratiocos = costhetas_2[...,None,:] / costhetas_1[...,:,None] # ratio of cosines of the structure of matrix
+    par_tr = np.array([[1,-1],[-1,1]]) # matrix to change the sign of the matrix elements to fill correctly
+    Mt = (et[...,None,None] + par_tr) * (1 + par_tr * ratiocos) / 4 # array of the transmission matrix
+    Mr = (et[...,None,None] + par_tr) * (1 - par_tr * ratiocos) / 4 # array of the reflection matrix
+    return np.block([[Mt,Mr],[Mr,Mt]])
+
+def calc_dct(Tp, Tm):
+    """differential chiral transmission or reflection"""
+    return 2 * (Tp - Tm) / (Tp + Tm)  # Tp is the transmission + and Tm the transmission -
+
+#########################
+# Main code             #
+#########################
 
 class Layer:
     """A base class for layers"""
@@ -89,11 +124,11 @@ class TScat:
         # right of an interface) to the scattering matrix (connecting incoming and
         # outgoing amplitudes). the matrices are 2x2 blocks, where the index
         # within each block is for left and right circular polarizations
-        tt  = self.M[..., 0:2, 0:2]  # transmission block upper left
         trp = self.M[..., 0:2, 2:4]  # reflection block upper right
         tr  = self.M[..., 2:4, 0:2]  # reflection block lower left
         ttp = self.M[..., 2:4, 2:4]  # transmission block lower right
-        tti = np.linalg.inv(tt)  # inversion of transmission block upper left
+        # this calculates the inverse of self.M[..., 0:2, 0:2] (iterating over all but the last two indices)
+        tti = inv_multi_2x2(self.M)  # inversion of transmission block upper left
         self.Rs = tr @ tti    # reflection matrix for incidence from the left
         self.Ts = tti         # transmission matrix for incidence from the left
         self.Rd = -tti @ trp  # reflection matrix for incidence from the right
@@ -139,19 +174,6 @@ class TScat:
         return self.fwd2
 #########################################################################################
 
-def transfer_matrix(n1, mu1, costhetas_1, n2, mu2, costhetas_2):
-    """transfer matrix for an interface from material 1 to 2 (left to right)"""
-    et = (n2 / n1) * np.sqrt(mu1 / mu2)  # ratio of impendances
-    ratiocos = costhetas_2[...,None,:] / costhetas_1[...,:,None] # ratio of cosines of the structure of matrix
-    par_tr = np.array([[1,-1],[-1,1]]) # matrix to change the sign of the matrix elements to fill correctly
-    Mt = (et[...,None,None] + par_tr) * (1 + par_tr * ratiocos) / 4 # array of the transmission matrix
-    Mr = (et[...,None,None] + par_tr) * (1 - par_tr * ratiocos) / 4 # array of the reflection matrix
-    return np.block([[Mt,Mr],[Mr,Mt]])
-
-def calc_dct(Tp, Tm):
-    """differential chiral transmission or reflection"""
-    return 2 * (Tp - Tm) / (Tp + Tm)  # Tp is the transmission + and Tm the transmission -
-
 def chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False):
     """make a TransferMatrixLayer instance for a chirality-preserving mirror."""
     tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
@@ -187,7 +209,7 @@ def chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False):
     r_left  = np.column_stack((rPP_l, rMP_l, rPM_l, rMM_l)).reshape(mshape)
 
     # convert from scattering matrix S to transfer matrix M
-    Mt = np.linalg.inv(t_right)  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
+    Mt = inv_multi_2x2(t_right)  # Inversion of the Jt matrix to construct the submatrix 2x2 for the transmission
     Mr = r_left @ Mt  # Submatrix 2x2 for the reflection
     Mre = -Mt @ r_right  # Submatrix 2x2 for the reflection on the opposite side
     Mte = t_left - Mr @ r_right
