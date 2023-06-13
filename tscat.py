@@ -13,6 +13,11 @@ from functools import cached_property
 # Helper functions                                                                                            #
 ###############################################################################################################
 
+# matrix to change the sign of the matrix elements to fill correctly
+_par_tr = np.array([[1,-1],[-1,1]])
+# matrix to change from circular to linear polarization
+_U_circ_to_lin = np.array([[1,1],[1j,-1j]])/np.sqrt(2)
+
 def inv_multi_2x2(A):
     """same calculation as np.linalg.inv(A[...,:2,:2])"""
     Bshape = A.shape[:-2] + (2,2)
@@ -29,9 +34,8 @@ def transfer_matrix(eps1, mu1, costhetas_1, eps2, mu2, costhetas_2):
     """transfer matrix for an interface from material 1 to 2"""
     et = np.sqrt((eps2 * mu1) / (eps1 * mu2)) # ratio of impendances
     ratiocos = costhetas_2[...,None,:] / costhetas_1[...,:,None] # ratio of cosines of the structure of matrix
-    par_tr = np.array([[1,-1],[-1,1]]) # matrix to change the sign of the matrix elements to fill correctly
-    Mt = (et[...,None,None] + par_tr) * (1 + par_tr * ratiocos) / 4 # array of the transmission matrix
-    Mr = (et[...,None,None] + par_tr) * (1 - par_tr * ratiocos) / 4 # array of the reflection matrix
+    Mt = (et[...,None,None] + _par_tr) * (1 + _par_tr * ratiocos) / 4 # array of the transmission matrix
+    Mr = (et[...,None,None] + _par_tr) * (1 - _par_tr * ratiocos) / 4 # array of the reflection matrix
     return np.block([[Mt,Mr],[Mr,Mt]])
 
 def polarization_sums(x):
@@ -46,8 +50,7 @@ def calc_dct(Tp, Tm):
 
 def circ_to_lin(x):
     """convert matrix amplitudes from circular polarization to linear polarization"""
-    U = np.array([[1,1],[1j,-1j]])/np.sqrt(2)
-    return U @ x @ U.conj().T
+    return _U_circ_to_lin @ x @ _U_circ_to_lin.conj().T
 
 
 ###############################################################################################################
