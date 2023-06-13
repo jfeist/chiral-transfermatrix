@@ -7,10 +7,11 @@ __version__ = '0.1.0'
 __all__ = ['MaterialLayer', 'TransferMatrixLayer', 'TScat', 'chirality_preserving_mirror']
 
 import numpy as np
+from functools import cached_property
 
-#########################
-# Helper functions      #
-#########################
+###############################################################################################################
+# Helper functions                                                                                            #
+###############################################################################################################
 
 def inv_multi_2x2(A):
     """same calculation as np.linalg.inv(A[...,:2,:2])"""
@@ -33,13 +34,19 @@ def transfer_matrix(eps1, mu1, costhetas_1, eps2, mu2, costhetas_2):
     Mr = (et[...,None,None] + par_tr) * (1 - par_tr * ratiocos) / 4 # array of the reflection matrix
     return np.block([[Mt,Mr],[Mr,Mt]])
 
+def polarization_sums(x):
+    """for amplitudes with indices (...,pol_out,pol_in), sum probabilities over
+    output polarization pol_out and return with input polarization pol_in as
+    first index"""
+    return np.moveaxis(np.sum(abs(x)**2, axis=-2), -1, 0)
+
 def calc_dct(Tp, Tm):
     """differential chiral transmission or reflection"""
     return 2 * (Tp - Tm) / (Tp + Tm)  # Tp is the transmission + and Tm the transmission -
 
-#########################
-# Main code             #
-#########################
+###############################################################################################################
+# Main code                                                                                                   #
+###############################################################################################################
 
 class Layer:
     """A base class for layers"""
@@ -97,6 +104,9 @@ class TransferMatrixLayer(Layer):
     def transfer_matrix(self, prev):
         return self.M
 
+###############################################################################################################
+# Main class                                                                                                  #
+###############################################################################################################
 class TScat:
     """A multilayer made of a sequence of layers. Calculates the scattering properties upon instantiation."""
     def __init__(self, theta0, layers, omega):
@@ -134,19 +144,32 @@ class TScat:
         self.Rd = -tti @ trp  # reflection matrix for incidence from the right
         self.Td = ttp + tr @ self.Rd # transmission matrix for incidence from the right
 
-        # Calculate transmittance, reflectance, and DCT/DCR
+    ###############################################################################################################
+    # Member functions to access transmittance, reflectance, and DCT/DCR                                          #
+    ###############################################################################################################
+    # These are implemented as cached properties that are computed on first access and then stored in the object.
+    # The names below mean the following:
+    # T/R: transmittance/reflectance
+    # s/d: incidence from the left/right
+    # p/m: incoming polarization +/-
+    # DCT/DCR: differential chiral transmittance/reflection
+    ###############################################################################################################
 
-        # sum probabilities over polarization of the outgoing field and return
-        # with input polarization as first index
-        polarization_sums = lambda x: np.moveaxis(np.sum(abs(x)**2, axis=-2), -1, 0)
-        self.Tsp, self.Tsm = polarization_sums(self.Ts) # transmittance +/- for incidence from the left
-        self.Rsp, self.Rsm = polarization_sums(self.Rs) # reflectance   +/- for incidence from the left
-        self.Tdp, self.Tdm = polarization_sums(self.Td) # transmittance +/- for incidence from the right
-        self.Rdp, self.Rdm = polarization_sums(self.Rd) # reflectance   +/- for incidence from the right
-        self.dct_s = calc_dct(self.Tsp, self.Tsm)  # dct for incidence from the left
-        self.dcr_s = calc_dct(self.Rsp, self.Rsm)  # dcr for incidence from the left
-        self.dct_r = calc_dct(self.Tdp, self.Tdm)  # dct for incidence from the right
-        self.dcr_r = calc_dct(self.Rdp, self.Rdm)  # dcr for incidence from the right
+    # internal helpers
+    _Tspm = cached_property(lambda self: polarization_sums(self.Ts))
+    _Rspm = cached_property(lambda self: polarization_sums(self.Rs))
+    _Tdpm = cached_property(lambda self: polarization_sums(self.Td))
+    _Rdpm = cached_property(lambda self: polarization_sums(self.Rd))
+
+    # external interface
+    Tsp, Tsm = property(lambda self: self._Tspm[0]), property(lambda self: self._Tspm[1])
+    Rsp, Rsm = property(lambda self: self._Rspm[0]), property(lambda self: self._Rspm[1])
+    Tdp, Tdm = property(lambda self: self._Tdpm[0]), property(lambda self: self._Tdpm[1])
+    Rdp, Tdm = property(lambda self: self._Rdpm[0]), property(lambda self: self._Rdpm[1])
+    dct_s = cached_property(lambda self: calc_dct(self.Tsp, self.Tsm))
+    dcr_s = cached_property(lambda self: calc_dct(self.Rsp, self.Rsm))
+    dct_r = cached_property(lambda self: calc_dct(self.Tdp, self.Tdm))
+    dcr_r = cached_property(lambda self: calc_dct(self.Rdp, self.Rdm))
 
     def field_ampl(self, layer, cinc):
         """Computes the amplitudes of the fields in a given layer (at the
@@ -172,7 +195,7 @@ class TScat:
             self.fwd2 = matvec_mul(b, self.fwd2)
 
         return self.fwd2
-#########################################################################################
+###############################################################################################################
 
 def chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False):
     """make a TransferMatrixLayer instance for a chirality-preserving mirror."""
