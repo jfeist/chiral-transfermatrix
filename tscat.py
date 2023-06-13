@@ -44,6 +44,12 @@ def calc_dct(Tp, Tm):
     """differential chiral transmission or reflection"""
     return 2 * (Tp - Tm) / (Tp + Tm)  # Tp is the transmission + and Tm the transmission -
 
+def circ_to_lin(x):
+    """convert matrix amplitudes from circular polarization to linear polarization"""
+    U = np.array([[1,1],[1j,-1j]])/np.sqrt(2)
+    return U @ x @ U.conj().T
+
+
 ###############################################################################################################
 # Main code                                                                                                   #
 ###############################################################################################################
@@ -139,10 +145,10 @@ class TScat:
         ttp = self.M[..., 2:4, 2:4]  # transmission block lower right
         # this calculates the inverse of self.M[..., 0:2, 0:2] (iterating over all but the last two indices)
         tti = inv_multi_2x2(self.M)  # inversion of transmission block upper left
-        self.Rs = tr @ tti    # reflection matrix for incidence from the left
-        self.Ts = tti         # transmission matrix for incidence from the left
-        self.Rd = -tti @ trp  # reflection matrix for incidence from the right
-        self.Td = ttp + tr @ self.Rd # transmission matrix for incidence from the right
+        self.rs = tr @ tti    # reflection matrix for incidence from the left
+        self.ts = tti         # transmission matrix for incidence from the left
+        self.rd = -tti @ trp  # reflection matrix for incidence from the right
+        self.td = ttp + tr @ self.rd # transmission matrix for incidence from the right
 
     ###############################################################################################################
     # Member functions to access transmittance, reflectance, and DCT/DCR                                          #
@@ -156,20 +162,36 @@ class TScat:
     ###############################################################################################################
 
     # internal helpers
-    _Tspm = cached_property(lambda self: polarization_sums(self.Ts))
-    _Rspm = cached_property(lambda self: polarization_sums(self.Rs))
-    _Tdpm = cached_property(lambda self: polarization_sums(self.Td))
-    _Rdpm = cached_property(lambda self: polarization_sums(self.Rd))
+    _Ts = cached_property(lambda self: polarization_sums(self.ts))
+    _Rs = cached_property(lambda self: polarization_sums(self.rs))
+    _Td = cached_property(lambda self: polarization_sums(self.td))
+    _Rd = cached_property(lambda self: polarization_sums(self.rd))
 
     # external interface
-    Tsp, Tsm = property(lambda self: self._Tspm[0]), property(lambda self: self._Tspm[1])
-    Rsp, Rsm = property(lambda self: self._Rspm[0]), property(lambda self: self._Rspm[1])
-    Tdp, Tdm = property(lambda self: self._Tdpm[0]), property(lambda self: self._Tdpm[1])
-    Rdp, Tdm = property(lambda self: self._Rdpm[0]), property(lambda self: self._Rdpm[1])
+    Tsp, Tsm = property(lambda self: self._Ts[0]), property(lambda self: self._Ts[1])
+    Rsp, Rsm = property(lambda self: self._Rs[0]), property(lambda self: self._Rs[1])
+    Tdp, Tdm = property(lambda self: self._Td[0]), property(lambda self: self._Td[1])
+    Rdp, Tdm = property(lambda self: self._Rd[0]), property(lambda self: self._Rd[1])
     dct_s = cached_property(lambda self: calc_dct(self.Tsp, self.Tsm))
     dcr_s = cached_property(lambda self: calc_dct(self.Rsp, self.Rsm))
     dct_r = cached_property(lambda self: calc_dct(self.Tdp, self.Tdm))
     dcr_r = cached_property(lambda self: calc_dct(self.Rdp, self.Rdm))
+
+    # linear polarization transmission and reflection amplitudes
+    ts_lin = cached_property(lambda self: circ_to_lin(self.ts))
+    rs_lin = cached_property(lambda self: circ_to_lin(self.rs))
+    td_lin = cached_property(lambda self: circ_to_lin(self.td))
+    rd_lin = cached_property(lambda self: circ_to_lin(self.rd))
+
+    _Ts_lin = cached_property(lambda self: polarization_sums(self.ts_lin))
+    _Rs_lin = cached_property(lambda self: polarization_sums(self.rs_lin))
+    _Td_lin = cached_property(lambda self: polarization_sums(self.td_lin))
+    _Rd_lin = cached_property(lambda self: polarization_sums(self.rd_lin))
+
+    Ts_lin_p, Ts_lin_s = property(lambda self: self._Ts_lin[0]), property(lambda self: self._Ts_lin[1])
+    Rs_lin_p, Rs_lin_s = property(lambda self: self._Rs_lin[0]), property(lambda self: self._Rs_lin[1])
+    Td_lin_p, Td_lin_s = property(lambda self: self._Td_lin[0]), property(lambda self: self._Td_lin[1])
+    Rd_lin_p, Td_lin_s = property(lambda self: self._Rd_lin[0]), property(lambda self: self._Rd_lin[1])
 
     def field_ampl(self, layer, cinc):
         """Computes the amplitudes of the fields in a given layer (at the
@@ -182,7 +204,7 @@ class TScat:
         # get coefficients on the right for input from the left
         # this is just the transmitted field, there is no incoming field from the right
         self.fwd2 = np.zeros(self.M.shape[:-1], dtype=complex)
-        self.fwd2[..., 0:2] = matvec_mul(self.Ts,np.atleast_1d(cinc))
+        self.fwd2[..., 0:2] = matvec_mul(self.ts,np.atleast_1d(cinc))
 
         if layer==len(self.layers)-1:
             return self.fwd2
