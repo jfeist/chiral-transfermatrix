@@ -11,13 +11,13 @@ omegaPR = 2.0
 gammaPR = 0.05
 mirror_1 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)
 mirror_2 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=True)
-air_infty = ts.MaterialLayer(eps=1,k=0,mu=1,d=np.inf)
-air_cavity = ts.MaterialLayer(eps=1,k=0,mu=1,d=l)
+air_infty  = ts.MaterialLayer(d=np.inf,eps=1)
+air_cavity = ts.MaterialLayer(d=l,     eps=1)
 layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
 
 theta0 = 0 # INCIDENT ANGLE
 
-tScat = ts.TScat(theta0, layers, omega)
+tScat = ts.TScat(layers, omega, theta0)
 
 ampl = tScat.field_ampl(2, [1,0])  # field in cavity for an incoming LCP wave
 

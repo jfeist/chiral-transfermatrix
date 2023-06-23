@@ -15,19 +15,19 @@ gammaPR = 0.05
 
 mirror_1 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)
 mirror_2 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=True)
-air_infty = ts.MaterialLayer(eps=1,k=0,mu=1,d=np.inf)
-air_thin  = ts.MaterialLayer(eps=1,k=0,mu=1,d=0.01)
+air_infty = ts.MaterialLayer(d=np.inf, eps=1)
+air_thin  = ts.MaterialLayer(d=0.01,   eps=1)
 
 # we want to scan over the resonance strength omegapChiral AND the frequency
 # omega (i.e., output should be 100x100), so make this a 100x1 2D array
 # numpy broadcasting will take care of the rest (i.e., omega will be the second axis)
 omegapChiral = np.linspace(0.0, 1.0, 20)[:,None]
 eps_mol, k_mol = eps_DL(omega, epsinf=2.89, omegap=omegapChiral, omega0=2.0, gamma=0.05, k0=0.0)
-molecules = ts.MaterialLayer(eps=eps_mol,k=k_mol,mu=1,d=180.)
+molecules = ts.MaterialLayer(d=180.,eps=eps_mol,k=k_mol)
 
 layers = [air_infty, mirror_1, air_thin, molecules, air_thin, mirror_2, air_infty]
 
-tScat = ts.TScat(theta0, layers, omega)
+tScat = ts.TScat(layers, omega, theta0)
 
 # np.savez_compressed('tests/test_2.npz', omega=omega, coupl=coupl, Tplist=arr1, Tmlist=arr2, Rplist=arr3, Rmlist=arr4, DCTlist=arr5)
 def test_2():    

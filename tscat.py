@@ -31,7 +31,7 @@ def inv_multi_2x2(A):
 
 def transfer_matrix(eps1, mu1, costhetas_1, eps2, mu2, costhetas_2):
     """transfer matrix for an interface from material 1 to 2"""
-    et = np.sqrt((eps2 * mu1) / (eps1 * mu2)) # ratio of impendances
+    et = np.sqrt((eps2 * mu1) / (eps1 * mu2)) # ratio of impedances
     ratiocos = costhetas_2[...,None,:] / costhetas_1[...,:,None] # ratio of cosines of the structure of matrix
     Mt = (et[...,None,None] + _par_tr) * (1 + _par_tr * ratiocos) / 4 # array of the transmission matrix
     Mr = (et[...,None,None] + _par_tr) * (1 - _par_tr * ratiocos) / 4 # array of the reflection matrix
@@ -62,7 +62,7 @@ class Layer:
 
 class MaterialLayer(Layer):
     """A layer made of a material described by its optical constants and thickness."""
-    def __init__(self,eps,k,mu,d,name=""):
+    def __init__(self,d,eps,k=0,mu=1,name=""):
         self.eps = np.atleast_1d(eps)
         self.k = np.atleast_1d(k)
         self.mu = np.atleast_1d(mu)
@@ -117,19 +117,21 @@ class TransferMatrixLayer(Layer):
 ###############################################################################################################
 class TScat:
     """A multilayer made of a sequence of layers. Calculates the scattering properties upon instantiation."""
-    def __init__(self, theta0, layers, omega):
+    def __init__(self, layers, omega, theta0):
         self.layers = layers
+        self.omega = omega
+        self.theta0 = theta0
 
         # Snell's law means that n*sin(theta) is conserved, these are the incoming values
-        nsinthetas = self.layers[0].nps * np.sin(theta0) + 0j
+        nsinthetas = layers[0].nps * np.sin(theta0) + 0j
         for l in layers:
             l.set_costheta(nsinthetas)
 
         # phase propagation factors in each (interior) layer
-        self.phas = [l.phase_matrix_diagonal(omega) for l in self.layers[1:-1]]
+        self.phas = [l.phase_matrix_diagonal(omega) for l in layers[1:-1]]
 
         # transfer matrices at the interfaces between layers
-        self.M12 = [l2.transfer_matrix(l1) for l1,l2 in zip(self.layers, self.layers[1:])]
+        self.M12 = [l2.transfer_matrix(l1) for l1,l2 in zip(layers, layers[1:])]
 
         # total transfer matrix
         self.M = self.M12[0] # M of the first interface
@@ -195,7 +197,7 @@ class TScat:
     Td_lin_p, Td_lin_s = property(lambda self: self._Td_lin[0]), property(lambda self: self._Td_lin[1])
     Rd_lin_p, Td_lin_s = property(lambda self: self._Rd_lin[0]), property(lambda self: self._Rd_lin[1])
 
-    def field_ampl(self, layer, cinc):
+    def field_ampl(self, ilayer, cinc):
         """Computes the amplitudes of the fields in a given layer (at the
         right end), given the amplitudes of the incoming fields from the
         left."""
@@ -208,13 +210,13 @@ class TScat:
         self.fwd2 = np.zeros(self.M.shape[:-1], dtype=complex)
         self.fwd2[..., 0:2] = matvec_mul(self.ts,np.atleast_1d(cinc))
 
-        if layer==len(self.layers)-1:
+        if ilayer==len(self.layers)-1:
             return self.fwd2
 
         # now successively apply the transfer matrices from right to left to get
         # the field amplitude on the right of each layer
         self.fwd2 = matvec_mul(self.M12[-1], self.fwd2)
-        for a,b in zip(self.phas[layer:][::-1], self.M12[layer:-1][::-1]):
+        for a,b in zip(self.phas[ilayer:][::-1], self.M12[ilayer:-1][::-1]):
             self.fwd2 *= a
             self.fwd2 = matvec_mul(b, self.fwd2)
 
