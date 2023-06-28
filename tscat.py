@@ -179,10 +179,10 @@ class TScat:
     Rsp, Rsm = property(lambda self: self._Rs[0]), property(lambda self: self._Rs[1])
     Tdp, Tdm = property(lambda self: self._Td[0]), property(lambda self: self._Td[1])
     Rdp, Rdm = property(lambda self: self._Rd[0]), property(lambda self: self._Rd[1])
-    dct_s = cached_property(lambda self: calc_dct(self.Tsp, self.Tsm))
-    dcr_s = cached_property(lambda self: calc_dct(self.Rsp, self.Rsm))
-    dct_r = cached_property(lambda self: calc_dct(self.Tdp, self.Tdm))
-    dcr_r = cached_property(lambda self: calc_dct(self.Rdp, self.Rdm))
+    DCTs = cached_property(lambda self: calc_dct(self.Tsp, self.Tsm))
+    DCRs = cached_property(lambda self: calc_dct(self.Rsp, self.Rsm))
+    DCTd = cached_property(lambda self: calc_dct(self.Tdp, self.Tdm))
+    DCRd = cached_property(lambda self: calc_dct(self.Rdp, self.Rdm))
 
     # linear polarization transmission and reflection amplitudes
     ts_lin = cached_property(lambda self: circ_to_lin(self.ts))

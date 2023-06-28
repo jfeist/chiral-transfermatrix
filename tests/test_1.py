@@ -34,6 +34,6 @@ def test_1():
     assert np.allclose(tScat.Tsm, ref_data['Tmlist'])
     assert np.allclose(tScat.Rsp, ref_data['Rplist'])
     assert np.allclose(tScat.Rsm, ref_data['Rmlist'])
-    assert np.allclose(tScat.dct_s, ref_data['DCTlist'])
+    assert np.allclose(tScat.DCTs, ref_data['DCTlist'])
 
     print('Test 1 passed!')
