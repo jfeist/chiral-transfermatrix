@@ -62,16 +62,16 @@ class Layer:
 
 class MaterialLayer(Layer):
     """A layer made of a material described by its optical constants and thickness."""
-    def __init__(self,d,eps,k=0,mu=1,name=""):
+    def __init__(self,d,eps,kappa=0,mu=1,name=""):
         self.eps = np.atleast_1d(eps)
-        self.k = np.atleast_1d(k)
+        self.kappa = np.atleast_1d(kappa)
         self.mu = np.atleast_1d(mu)
         self.d = np.atleast_1d(d)
         self.name = name
 
         # REFRACTIVE INDICES OF CHIRAL MEDIUM
-        npl = np.sqrt(self.eps*self.mu) * (1 + self.k)  # refractive index n+
-        npm = np.sqrt(self.eps*self.mu) * (1 - self.k)  # refractive index n-
+        npl = np.sqrt(self.eps*self.mu) * (1 + self.kappa)  # refractive index n+
+        npm = np.sqrt(self.eps*self.mu) * (1 - self.kappa)  # refractive index n-
         # nps has indices [input_indices..., polarization]
         self.nps = np.stack((npl,npm),axis=-1)
 

@@ -11,7 +11,7 @@ omega = np.linspace(1.6, 2.4, 30)  # Omega in eV
 theta0 = 0.231
 
 eps_met, k_met = eps_DL(omega, epsinf=4.77574276, omegap=9.48300763, omega0=0, gamma=0.17486845, k0=0)
-metal_mirror = ts.MaterialLayer(d=30,eps=eps_met,k=k_met)
+metal_mirror = ts.MaterialLayer(d=30,eps=eps_met,kappa=k_met)
 
 air_infty = ts.MaterialLayer(d=np.inf,eps=1)
 
@@ -20,7 +20,7 @@ air_infty = ts.MaterialLayer(d=np.inf,eps=1)
 # numpy broadcasting will take care of the rest (i.e., omega will be the second axis)
 omegapChiral = np.linspace(0.0, 1.0, 20)[:,None]
 eps_mol, k_mol = eps_DL(omega, epsinf=2.89, omegap=omegapChiral, omega0=2.0, gamma=0.05, k0=1e-3)
-molecules = ts.MaterialLayer(d=150.,eps=eps_mol,k=k_mol)
+molecules = ts.MaterialLayer(d=150.,eps=eps_mol,kappa=k_mol)
 
 layers = [air_infty, metal_mirror, molecules, metal_mirror, air_infty]
 tScat = ts.TScat(layers, omega, theta0)

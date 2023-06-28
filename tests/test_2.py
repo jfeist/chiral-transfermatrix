@@ -23,7 +23,7 @@ air_thin  = ts.MaterialLayer(d=0.01,   eps=1)
 # numpy broadcasting will take care of the rest (i.e., omega will be the second axis)
 omegapChiral = np.linspace(0.0, 1.0, 20)[:,None]
 eps_mol, k_mol = eps_DL(omega, epsinf=2.89, omegap=omegapChiral, omega0=2.0, gamma=0.05, k0=0.0)
-molecules = ts.MaterialLayer(d=180.,eps=eps_mol,k=k_mol)
+molecules = ts.MaterialLayer(d=180.,eps=eps_mol,kappa=k_mol)
 
 layers = [air_infty, mirror_1, air_thin, molecules, air_thin, mirror_2, air_infty]
 
