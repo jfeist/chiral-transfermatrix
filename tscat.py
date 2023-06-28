@@ -118,6 +118,9 @@ class TransferMatrixLayer(Layer):
 class TScat:
     """A multilayer made of a sequence of layers. Calculates the scattering properties upon instantiation."""
     def __init__(self, layers, omega, theta0):
+        omega = np.atleast_1d(omega)
+        theta0 = np.atleast_1d(theta0)
+
         self.layers = layers
         self.omega = omega
         self.theta0 = theta0
@@ -175,7 +178,7 @@ class TScat:
     Tsp, Tsm = property(lambda self: self._Ts[0]), property(lambda self: self._Ts[1])
     Rsp, Rsm = property(lambda self: self._Rs[0]), property(lambda self: self._Rs[1])
     Tdp, Tdm = property(lambda self: self._Td[0]), property(lambda self: self._Td[1])
-    Rdp, Tdm = property(lambda self: self._Rd[0]), property(lambda self: self._Rd[1])
+    Rdp, Rdm = property(lambda self: self._Rd[0]), property(lambda self: self._Rd[1])
     dct_s = cached_property(lambda self: calc_dct(self.Tsp, self.Tsm))
     dcr_s = cached_property(lambda self: calc_dct(self.Rsp, self.Rsm))
     dct_r = cached_property(lambda self: calc_dct(self.Tdp, self.Tdm))
