@@ -4,7 +4,7 @@ authors: Lorenzo Mauro, Jacopo Fregoni, Remi Avriller, and Johannes Feist"""
 
 __version__ = '0.1.0'
 
-__all__ = ['MaterialLayer', 'TransferMatrixLayer', 'TScat', 'chirality_preserving_mirror']
+__all__ = ['MaterialLayer', 'TransferMatrixLayer', 'TScat', 'helicity_preserving_mirror']
 
 import numpy as np
 from functools import cached_property
@@ -226,7 +226,7 @@ class TScat:
         return self.fwd2
 ###############################################################################################################
 
-def chirality_preserving_mirror(omega,omegaPR,gammaPR,reversed=False):
+def helicity_preserving_mirror(omega,omegaPR,gammaPR,reversed=False):
     """make a TransferMatrixLayer instance for a chirality-preserving mirror."""
     tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
     rM = abs(tP)

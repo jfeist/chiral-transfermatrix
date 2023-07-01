@@ -13,8 +13,8 @@ theta0 = 0.231
 omegaPR = 2.0
 gammaPR = 0.05
 
-mirror_1 = ts.chirality_preserving_mirror(omega,omegaPR,gammaPR,reversed=False)
-mirror_2 = ts.chirality_preserving_mirror(omega,omegaPR,gammaPR,reversed=True)
+mirror_1 = ts.helicity_preserving_mirror(omega,omegaPR,gammaPR,reversed=False)
+mirror_2 = ts.helicity_preserving_mirror(omega,omegaPR,gammaPR,reversed=True)
 air_infty = ts.MaterialLayer(d=np.inf, eps=1)
 air_thin  = ts.MaterialLayer(d=0.01,   eps=1)
 
