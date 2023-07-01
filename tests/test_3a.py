@@ -9,8 +9,8 @@ omega = np.linspace(1.8, 2.2, 30)
 l = np.linspace(150, 450, 20)[:,None]
 omegaPR = 2.0
 gammaPR = 0.05
-mirror_1 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)
-mirror_2 = ts.chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=True)
+mirror_1 = ts.chirality_preserving_mirror(omega,omegaPR,gammaPR,reversed=False)
+mirror_2 = ts.chirality_preserving_mirror(omega,omegaPR,gammaPR,reversed=True)
 air_infty  = ts.MaterialLayer(d=np.inf,eps=1)
 air_cavity = ts.MaterialLayer(d=l,     eps=1)
 layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]

@@ -226,7 +226,7 @@ class TScat:
         return self.fwd2
 ###############################################################################################################
 
-def chirality_preserving_mirror(omegaPR,gammaPR,omega,reversed=False):
+def chirality_preserving_mirror(omega,omegaPR,gammaPR,reversed=False):
     """make a TransferMatrixLayer instance for a chirality-preserving mirror."""
     tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
     rM = abs(tP)
