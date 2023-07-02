@@ -1,22 +1,23 @@
-# TSCAT
+# Introduction
 
-`tscat` is a Python library using the transfer matrix approach for calculating scattering properties of multilayer structures including chiral materials, and allowing for the inclusion of arbitrary optical elements (such as metamaterial mirrors) that are defined by their transfer matrix (assumed to be calculated/modeled externally).
+TSCAT is a Python library using the transfer matrix approach for calculating scattering properties of multilayer structures including chiral materials, and allowing for the inclusion of arbitrary optical elements (such as metamaterial mirrors) that are defined by their transfer matrix (assumed to be calculated/modeled externally).
 
-## Installation
+# Installation
 
 Install the package with `pip`:
 ```bash
 pip install tscat
 ```
 
-## Usage
-All the following examples assume that the relevant packages are imported as follows:
+# Usage
+All the following examples assume that the following modules are imported:
 ```python
 import tscat as ts
 import numpy as np
 import matplotlib.pyplot as plt
 ```
 
+## Simple example
 An extremely simple example (a 100nm dielectric layer surrounded by air) is given by the following:
 ```python
 air_infty = ts.MaterialLayer(d=np.inf, eps=1, kappa=0, mu=1)
@@ -86,10 +87,10 @@ plt.xlabel('Layer thickness (nm)')
 plt.ylabel('Frequency (eV)')
 plt.tight_layout(pad=0.5)
 ```
-![thickness scan](thickness_scan.png)
+![thickness scan](figs/thickness_scan.png)
 
-## Chirality
-We now make the dielectric material chiral, with chirality parameter `kappa=1e-3` and plot the differential chiral transmission DCT = 2 (Tp - Tm)/(Tp + Tm):
+## Chiral materials
+We now make the dielectric material chiral, with Pasteur chirality parameter `kappa=1e-3`. Since this is small, the transmission for left- and right-circular polarized light are visually indistinguishable, and we instead plot the differential chiral transmission DCT = 2(Tp - Tm)/(Tp + Tm):
 ```python
 d = np.linspace(500, 1000, 51)
 omega = np.linspace(0.5, 1.5, 101)[:,None]
@@ -109,78 +110,12 @@ plt.xlabel('Layer thickness (nm)')
 plt.ylabel('Frequency (eV)')
 plt.tight_layout(pad=0.5)
 ```
-![thickness scan DCT](thickness_scan_DCT.png)
+![thickness scan DCT](figs/thickness_scan_DCT.png)
 
-## Dielectric function and chiral coupling
+## Arbitrary layers defined by their transfer matrix
 
-The implementation of the dielectric function *ε(ω)* and the Pasteur (chiral) coupling *κ(ω)* are presented below. Their expressions can be modified to model other structures depending on the problem the user faces.
+TSCAT also supports the use of layers that are not just uniform material layers, but, e.g., metamaterials described by a transfer matrix that is externally provided. This is done by passing a `TransferMatrixLayer` object, which is a simple container for the transfer matrix. The transfer matrix must be as a `...×4×4` array, where the `...` indicate an arbitrary number of dimensions that are treated according to broadcasting rules (e.g., these can describe frequency dependence), and the last two dimension describe the transfer matrix, where the 4 entries correspond to (`sp`,`sm`,`dp`,`dm`) waves (where again, `s`/`d` stand for left- and right-going waves, and `p`/`m` correspond to helicity of plus/minus 1). For example, this can be used to describe a helicity-preserving mirror, and the model described in [Phys. Rev. A 107, L021501 (2021)](https://doi.org/10.1103/PhysRevA.107.L021501) is already provided in the code with a separate helper function `helicity_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)` that returns the transfer matrix for a mirror with a helicity-preserving resonance at frequency `omegaPR` and with linewidth `gammaPR`, for frequencies `omega`. The `reversed` argument can be used to reverse the direction of the mirror, as necessary for creating a helicity-preserving cavity.
 
-```python
-def eps_DL(omega, epsinf, omegap, omega0=0, gamma=0, k0=0):
-    """Drude-Lorentz model for the dielectric function of a material."""
-    res = omegap**2 / (omega0**2 - omega**2 - 1j * gamma * omega)
-    eps = epsinf + res
-    n = np.sqrt(eps)
-    k = 0*eps if k0==0 else k0 * omega / omega0 * res
-    return eps, n, k
-```
-
-## Frequencies and couplings range
-
-`tscat` assumes that frequencies ω are given in units of eV and lengths in units of nm.
-
-```python
-omega = np.linspace(1.6, 2.4, 100)
-```
-
-## Chirality-preserving mirrors
-
-TSCAT also works with chirality-preserving mirrors or any other metamirrors for which the response is known. For instance, the preserving mirror modelled in https://doi.org/10.1103/PhysRevA.107.L021501 is implemented below. Note that all the coefficients such as `tPP_r` or `tMP_r` are collected in lists called `t1_right` and so on. All the elements of the scattering matrix are then stored in the list **s****c****a****t****T****O****T** which contains all the scattering matrices for the modelled custom layers. The implementation of the second preserving mirror is analogous.
-
-```python
-scatTOT = list()  # cumulative scattering matrix for all the custom layers
-
-###############################################################
-# DEFINITION OF THE SCATTERING MATRICES FOR PRESERVING MIRROR 1 
-####################################################################
-omegaPR = 2.0
-gammaPR = 0.05
-
-tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
-rM =  np.abs(gammaPR / (1j * (omega - omegaPR) + gammaPR))
-phase = tP / rM
-tPM = np.abs(gammaPR / (1j * (omega - omegaPR) + gammaPR))
-t = np.sqrt((1 - np.abs(tPM)**2) / 2.0)
-phit = np.pi / 2
-pst = np.exp(1j * phit)
-
-tPP_r = t * pst 
-tMP_r = 0.0j * ngrid
-tPM_r = tPM * phase 
-tMM_r = t * pst
-
-tPP_l = t * pst 
-tMP_l = tPM * phase 
-tPM_l = 0.0j * ngrid
-tMM_l = t * pst 
-
-rPP_r = tPM * pst**4 * (1/phase)**3 
-rMP_r = - t * (1 / phase)**2 * (pst**3) 
-rPM_r = - t * (1 / phase)**2 * (pst**3) 
-rMM_r = 0.0j * ngrid
-
-rPP_l = 0.0j * ngrid
-rMP_l = t * (phase**2) * (1 / pst)
-rPM_l = t * (phase**2) * (1 / pst)
-rMM_l = - tPM * phase
-
-t1_right = [tPP_r, tMP_r, tPM_r, tMM_r]  # 2x2 scattering matrices
-t1_left = [tPP_l, tMP_l, tPM_l, tMM_l]
-r1_right = [rPP_r, rMP_r, rPM_r, rMM_r]
-r1_left = [rPP_l, rMP_l, rPM_l, rMM_l]
-
-scatTOT.append([t1_right, t1_left, r1_right, r1_left])
-```
 
 ## Multilayers for Standard FP
 
@@ -193,7 +128,7 @@ Tplist = []
 Tmlist = []
 Rplist = []
 Rmlist = []
-DCTlist = []
+DCTlist = [] 
 
 for i in range(len(coupl)):
     
