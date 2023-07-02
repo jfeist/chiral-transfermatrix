@@ -126,7 +126,7 @@ class TScat:
         self.theta0 = theta0
 
         # Snell's law means that n*sin(theta) is conserved, these are the incoming values
-        nsinthetas = layers[0].nps * np.sin(theta0) + 0j
+        nsinthetas = layers[0].nps * np.sin(theta0[...,None]) + 0j
         for l in layers:
             l.set_costheta(nsinthetas)
 

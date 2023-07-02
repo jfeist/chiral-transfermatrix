@@ -2,12 +2,14 @@ import tscat as ts
 import numpy as np
 
 def test_3():
-    # we want to scan over frequency omega, and cavity length l, as two different
-    # axis. TScat is "transparent" to numpy broadcasting, so we can just make omega
-    # a 1D array and l a 2D array (shape nl x 1), and numpy will take care of the
-    # rest. The results will be 2D arrays of shape nl x nomega
+    # we want to scan over the angle theta0, cavity length l, and frequency omega
+    # (i.e., output should be 2x600x500),
+    # so make the arrays to get this with broadcasting - index order is then
+    # itheta0, iomegap, iomega
     omega = np.linspace(1.8, 2.2, 30)
     l = np.linspace(150, 450, 20)[:,None]
+    theta0 = np.r_[0, 0.231][:,None,None]
+
     omegaPR = 2.0
     gammaPR = 0.05
     mirror_1 = ts.helicity_preserving_mirror(omega,omegaPR,gammaPR,reversed=False)
@@ -16,26 +18,10 @@ def test_3():
     air_cavity = ts.MaterialLayer(d=l,     eps=1)
     layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
 
-    theta0 = 0 # INCIDENT ANGLE
-
     tScat = ts.TScat(layers, omega, theta0)
 
     ampl = tScat.field_ampl(2, [1,0])  # field in cavity for an incoming LCP wave
 
-    Elp = ampl[:, :, 0]
-    Elm = ampl[:, :, 1]
-    Erp = ampl[:, :, 2]
-    Erm = ampl[:, :, 3]
-    lcp = abs(Elp)**2 + abs(Erp)**2  # total LCP in layer 2 (inside the cavity)
-    rcp = abs(Elm)**2 + abs(Erm)**2  # total RCP in layer 2 (inside the cavity)
-    #####################################################################################
-
-    # np.savez_compressed('tests/test_3.npz', omega=omega, ELp=Elp, ELm=Elm, ERp=Erp, ERm=Erm, lcp=lcp, rcp=rcp)
+    # np.savez_compressed("tests/test_3.npz", ampl=ampl)
     ref_data = np.load('tests/test_3.npz')
-    assert np.allclose(omega, ref_data['omega'])
-    assert np.allclose(Elp, ref_data['ELp'])
-    assert np.allclose(Elm, ref_data['ELm'])
-    assert np.allclose(Erp, ref_data['ERp'])
-    assert np.allclose(Erm, ref_data['ERm'])
-    assert np.allclose(lcp, ref_data['lcp'])
-    assert np.allclose(rcp, ref_data['rcp'])
+    assert np.allclose(ref_data["ampl"], ampl)
