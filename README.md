@@ -87,7 +87,7 @@ plt.xlabel('Layer thickness (nm)')
 plt.ylabel('Frequency (eV)')
 plt.tight_layout(pad=0.5)
 ```
-![thickness scan](figs/thickness_scan.png)
+<img src="figs/thickness_scan_Tsp.png" width="480" alt="thickness scan">
 
 ## Chiral materials
 We now make the dielectric material chiral, with Pasteur chirality parameter `kappa=1e-3`. Since this is small, the transmission for left- and right-circular polarized light are visually indistinguishable, and we instead plot the differential chiral transmission DCT = 2(Tp - Tm)/(Tp + Tm):
@@ -110,13 +110,38 @@ plt.xlabel('Layer thickness (nm)')
 plt.ylabel('Frequency (eV)')
 plt.tight_layout(pad=0.5)
 ```
-![thickness scan DCT](figs/thickness_scan_DCT.png)
+<img src="figs/thickness_scan_DCT.png" width="480" alt="thickness scan DCT">
 
 ## Arbitrary layers defined by their transfer matrix
 
 TSCAT also supports the use of layers that are not just uniform material layers, but, e.g., metamaterials described by a transfer matrix that is externally provided. This is done by passing a `TransferMatrixLayer` object, which is a simple container for the transfer matrix. The transfer matrix must be passed as an `...×4×4` array, where the `...` indicate an arbitrary number of dimensions that are treated according to broadcasting rules (e.g., these can describe frequency dependence), and the last two dimension describe the transfer matrix, where the 4 entries correspond to (`sp`,`sm`,`dp`,`dm`) waves. Here again, `s`/`d` stand for left- (`sinister`) and right-going (`dexter`) waves, and `p`/`m` corresponds to a helicity of plus/minus 1 of circularly polarized light. For example, this can be used to describe a helicity-preserving mirror, and the model described in [Phys. Rev. A 107, L021501 (2021)](https://doi.org/10.1103/PhysRevA.107.L021501) is already provided in the code with a separate helper function `helicity_preserving_mirror(omegaPR,gammaPR,omega,enantiomer=False)` that returns the transfer matrix for a mirror with a helicity-preserving resonance at frequency `omegaPR` and with linewidth `gammaPR`, for frequencies `omega`. The `enantiomer` argument can be used to obtain the enantiomer (i.e., mirror image) version of the mirror, as necessary for creating a helicity-preserving cavity.
 
+The following example implements such a helicity-preserving cavity (corresponding to Fig. 3 of [Phys. Rev. A 107, L021501 (2021)](https://doi.org/10.1103/PhysRevA.107.L021501)):
+```python
+# scan over frequency omega and cavity length L (indices iomega, iL)
+omega = np.linspace(1.75, 2.25, 900)[:,None]
+L = np.linspace(100, 600, 1000)
+
+mirror_1 = ts.helicity_preserving_mirror(omega,omegaPR=2,gammaPR=0.05,enantiomer=False)
+mirror_2 = ts.helicity_preserving_mirror(omega,omegaPR=2,gammaPR=0.05,enantiomer=True)
+air_infty = ts.MaterialLayer(d=np.inf, eps=1)
+air_cav = ts.MaterialLayer(d=L, eps=1)
+layers = [air_infty, mirror_1, air_cav, mirror_2, air_infty]
+tScat = ts.TScat(layers, omega, theta0=0.)
+
+plt.pcolormesh(L, omega, tScat.DCTs, cmap='seismic', vmin=-2, vmax=2, shading='gouraud')
+cb = plt.colorbar()
+cb.set_label('Differential Chiral Transmission left to right')
+plt.xlabel(r'$L$ (nm)')
+plt.ylabel(r'$\omega$ (eV)')
+
+# line at L == lambda/2 = pi/k; constant is 1/ħc in units of 1/(eV nm)
+Lcut = np.pi / (0.005067730716156395 * omega.squeeze())
+plt.plot(Lcut,omega.squeeze(),'k--',lw=1)
+plt.tight_layout(pad=0.5)
+```
+<img src="figs/HPcav_thickness_scan_DCT.png" width="480" alt="HP cavity thickness scan DCT">
+
 # To do
-- add example with helicity-preserving cavity
 - add example with field amplitudes
 - add examples of PRA Letter and PRA long paper
