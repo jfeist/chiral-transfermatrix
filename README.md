@@ -47,10 +47,10 @@ The scattering properties can then be accessed as attributes of the returned obj
 > print(tScat.Tsp)
 [0.97666235 0.92385092 0.87460948]
 ```
-Here, `Tsp` is the transmission (`T`) probability from left to right (`s`) for positively polarized circular light (`p`) at the three frequencies. The eight available scattering probabilities are: `Tsp`, `Tsm`, `Tdp`, `Tdm`, `Rsp`, `Rsm`, `Rdp`, `Rdm`, where the letters stand for:
+Here, `Tsp` is the transmission (`T`) probability from left to right (`s`) for positively circular polarized light (`p`) at the three frequencies. The eight available scattering probabilities are: `Tsp`, `Tsm`, `Tdp`, `Tdm`, `Rsp`, `Rsm`, `Rdp`, `Rdm`, where the letters stand for:
 - `T`/`R`: Transmission / Reflection probability
 - `s`/`d`: Light propagating from left to right (`sinister`) / right to left (`dexter`)
-- `p`/`m`: Positively / negatively circular polarized light
+- `p`/`m`: Circularly polarized light with positive/negative helicity
 
 The full scattering amplitudes (and not just probabilities) are also available:
 ```python
@@ -114,7 +114,7 @@ plt.tight_layout(pad=0.5)
 
 ## Arbitrary layers defined by their transfer matrix
 
-TSCAT also supports the use of layers that are not just uniform material layers, but, e.g., metamaterials described by a transfer matrix that is externally provided. This is done by passing a `TransferMatrixLayer` object, which is a simple container for the transfer matrix. The transfer matrix must be as a `...×4×4` array, where the `...` indicate an arbitrary number of dimensions that are treated according to broadcasting rules (e.g., these can describe frequency dependence), and the last two dimension describe the transfer matrix, where the 4 entries correspond to (`sp`,`sm`,`dp`,`dm`) waves (where again, `s`/`d` stand for left- and right-going waves, and `p`/`m` correspond to helicity of plus/minus 1). For example, this can be used to describe a helicity-preserving mirror, and the model described in [Phys. Rev. A 107, L021501 (2021)](https://doi.org/10.1103/PhysRevA.107.L021501) is already provided in the code with a separate helper function `helicity_preserving_mirror(omegaPR,gammaPR,omega,reversed=False)` that returns the transfer matrix for a mirror with a helicity-preserving resonance at frequency `omegaPR` and with linewidth `gammaPR`, for frequencies `omega`. The `reversed` argument can be used to reverse the direction of the mirror, as necessary for creating a helicity-preserving cavity.
+TSCAT also supports the use of layers that are not just uniform material layers, but, e.g., metamaterials described by a transfer matrix that is externally provided. This is done by passing a `TransferMatrixLayer` object, which is a simple container for the transfer matrix. The transfer matrix must be passed as an `...×4×4` array, where the `...` indicate an arbitrary number of dimensions that are treated according to broadcasting rules (e.g., these can describe frequency dependence), and the last two dimension describe the transfer matrix, where the 4 entries correspond to (`sp`,`sm`,`dp`,`dm`) waves. Here again, `s`/`d` stand for left- (`sinister`) and right-going (`dexter`) waves, and `p`/`m` corresponds to a helicity of plus/minus 1 of circularly polarized light. For example, this can be used to describe a helicity-preserving mirror, and the model described in [Phys. Rev. A 107, L021501 (2021)](https://doi.org/10.1103/PhysRevA.107.L021501) is already provided in the code with a separate helper function `helicity_preserving_mirror(omegaPR,gammaPR,omega,enantiomer=False)` that returns the transfer matrix for a mirror with a helicity-preserving resonance at frequency `omegaPR` and with linewidth `gammaPR`, for frequencies `omega`. The `enantiomer` argument can be used to obtain the enantiomer (i.e., mirror image) version of the mirror, as necessary for creating a helicity-preserving cavity.
 
 # To do
 - add example with helicity-preserving cavity

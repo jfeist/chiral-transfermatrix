@@ -226,7 +226,7 @@ class TScat:
         return self.fwd2
 ###############################################################################################################
 
-def helicity_preserving_mirror(omega,omegaPR,gammaPR,reversed=False):
+def helicity_preserving_mirror(omega,omegaPR,gammaPR,enantiomer=False):
     """make a TransferMatrixLayer instance for a chirality-preserving mirror."""
     tP = gammaPR / (1j * (omega - omegaPR) + gammaPR)
     rM = abs(tP)
@@ -238,7 +238,7 @@ def helicity_preserving_mirror(omega,omegaPR,gammaPR,reversed=False):
     tPP_r = tMM_r = tPP_l = tMM_l = t * pst
     rMP_r = rPM_r = - t / phase**2 * pst**3
     rMP_l = rPM_l = t * phase**2 / pst
-    if reversed:
+    if enantiomer:
         tMP_r = tPM_l = tPM * phase
         tPM_r = tMP_l = 0 * tMP_r
 
