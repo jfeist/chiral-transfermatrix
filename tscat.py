@@ -80,11 +80,13 @@ class MaterialLayer(Layer):
         # costhetas has indices [input_indices..., polarization]
         self.costhetas = np.sqrt(1 - (nsinthetas / self.nps)**2)
 
-    def phase_matrix_diagonal(self, omega):
+    def phase_matrix_diagonal(self, omega, d=None):
         """propagation phases across layer (diagonal of a diagonal matrix)"""
         # constant is 1/ħc in units of 1/(eV nm), which converts
         # from omega in eV (i.e., it is really ħω) to k in nm^-1
-        kd = 0.005067730716156395 * omega * self.d
+        if d is None:
+            d = self.d
+        kd = 0.005067730716156395 * omega * d
         phis = kd[...,None] * self.nps * self.costhetas
         phil = np.concatenate((-phis, phis), axis=-1)  # array of phases
         return np.exp(1j*phil)
@@ -106,7 +108,7 @@ class TransferMatrixLayer(Layer):
     def set_costheta(self, nsinthetas):
         self.costhetas = np.sqrt(1 - nsinthetas**2)
 
-    def phase_matrix_diagonal(self, omega):
+    def phase_matrix_diagonal(self, omega, d=None):
         return np.ones(self.M.shape[:-1])
 
     def transfer_matrix(self, prev):
@@ -126,9 +128,9 @@ class TScat:
         self.theta0 = theta0
 
         # Snell's law means that n*sin(theta) is conserved, these are the incoming values
-        nsinthetas = layers[0].nps * np.sin(theta0[...,None]) + 0j
+        self.nsinthetas = layers[0].nps * np.sin(theta0[...,None]) + 0j
         for l in layers:
-            l.set_costheta(nsinthetas)
+            l.set_costheta(self.nsinthetas)
 
         # phase propagation factors in each (interior) layer
         self.phas = [l.phase_matrix_diagonal(omega) for l in layers[1:-1]]
