@@ -131,6 +131,13 @@ class TScat:
         self.nsinthetas = layers[0].nps * np.sin(theta0[...,None]) + 0j
         for l in layers:
             l.set_costheta(self.nsinthetas)
+        # according to Steven J. Byrnes (tmm author),
+        # https://arxiv.org/abs/1603.02720, the prefactor should actually
+        # contain costhetas.conj() for 'p' polarization (but not for 's'). Need
+        # to check how/if this translates to the circular basis used here.
+        # Correct way: Calculate Poynting vector for output fields which are
+        # superpositions of the two circular polarizations
+        self.Tfac = np.sqrt((layers[-1].nps * layers[-1].costhetas).real / (layers[0].nps * layers[0].costhetas).real)
 
         # phase propagation factors in each (interior) layer
         self.phas = [l.phase_matrix_diagonal(omega) for l in layers[1:-1]]
@@ -171,9 +178,9 @@ class TScat:
     ###############################################################################################################
 
     # internal helpers
-    _Ts = cached_property(lambda self: polarization_sums(self.ts))
+    _Ts = cached_property(lambda self: polarization_sums(self.ts*self.Tfac))
     _Rs = cached_property(lambda self: polarization_sums(self.rs))
-    _Td = cached_property(lambda self: polarization_sums(self.td))
+    _Td = cached_property(lambda self: polarization_sums(self.td*self.Tfac))
     _Rd = cached_property(lambda self: polarization_sums(self.rd))
 
     # external interface
@@ -192,9 +199,9 @@ class TScat:
     td_lin = cached_property(lambda self: circ_to_lin(self.td))
     rd_lin = cached_property(lambda self: circ_to_lin(self.rd))
 
-    _Ts_lin = cached_property(lambda self: polarization_sums(self.ts_lin))
+    _Ts_lin = cached_property(lambda self: polarization_sums(self.ts_lin*self.Tfac))
     _Rs_lin = cached_property(lambda self: polarization_sums(self.rs_lin))
-    _Td_lin = cached_property(lambda self: polarization_sums(self.td_lin))
+    _Td_lin = cached_property(lambda self: polarization_sums(self.td_lin*self.Tfac))
     _Rd_lin = cached_property(lambda self: polarization_sums(self.rd_lin))
 
     Ts_lin_p, Ts_lin_s = property(lambda self: self._Ts_lin[0]), property(lambda self: self._Ts_lin[1])
