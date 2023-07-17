@@ -1,4 +1,4 @@
-import tscat as ts
+import transfermat_scatt as ts
 import numpy as np
 
 def test_3():

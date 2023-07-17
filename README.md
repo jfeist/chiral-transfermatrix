@@ -1,18 +1,18 @@
 # Introduction
 
-TSCAT is a Python library using the transfer matrix approach for calculating scattering properties of multilayer structures including chiral materials, and allowing for the inclusion of arbitrary optical elements (such as metamaterial mirrors) that are defined by their transfer matrix (assumed to be calculated/modeled externally).
+`transfermat_scatt` is a Python library using the transfer matrix approach for calculating scattering properties of multilayer structures including chiral materials, and allowing for the inclusion of arbitrary optical elements (such as metamaterial mirrors) that are defined by their transfer matrix (assumed to be calculated/modeled externally).
 
 # Installation
 
 Install the package with `pip`:
 ```bash
-pip install tscat
+pip install transfermat_scatt
 ```
 
 # Usage
 All the following examples assume that the following modules are imported:
 ```python
-import tscat as ts
+import transfermat_scatt as ts
 import numpy as np
 import matplotlib.pyplot as plt
 ```
@@ -114,7 +114,7 @@ plt.tight_layout(pad=0.5)
 
 ## Arbitrary layers defined by their transfer matrix
 
-TSCAT also supports the use of layers that are not just uniform material layers, but, e.g., metamaterials described by a transfer matrix that is externally provided. This is done by passing a `TransferMatrixLayer` object, which is a simple container for the transfer matrix. The transfer matrix must be passed as an `...×4×4` array, where the `...` indicate an arbitrary number of dimensions that are treated according to broadcasting rules (e.g., these can describe frequency dependence), and the last two dimension describe the transfer matrix, where the 4 entries correspond to (`sp`,`sm`,`dp`,`dm`) waves. Here again, `s`/`d` stand for left- (`sinister`) and right-going (`dexter`) waves, and `p`/`m` corresponds to a helicity of plus/minus 1 of circularly polarized light. For example, this can be used to describe a helicity-preserving mirror, and the model described in [Phys. Rev. A 107, L021501 (2021)](https://doi.org/10.1103/PhysRevA.107.L021501) is already provided in the code with a separate helper function `helicity_preserving_mirror(omegaPR,gammaPR,omega,enantiomer=False)` that returns the transfer matrix for a mirror with a helicity-preserving resonance at frequency `omegaPR` and with linewidth `gammaPR`, for frequencies `omega`. The `enantiomer` argument can be used to obtain the enantiomer (i.e., mirror image) version of the mirror, as necessary for creating a helicity-preserving cavity.
+`transfermat_scatt` also supports the use of layers that are not just uniform material layers, but, e.g., metamaterials described by a transfer matrix that is externally provided. This is done by passing a `TransferMatrixLayer` object, which is a simple container for the transfer matrix. The transfer matrix must be passed as an `...×4×4` array, where the `...` indicate an arbitrary number of dimensions that are treated according to broadcasting rules (e.g., these can describe frequency dependence), and the last two dimension describe the transfer matrix, where the 4 entries correspond to (`sp`,`sm`,`dp`,`dm`) waves. Here again, `s`/`d` stand for left- (`sinister`) and right-going (`dexter`) waves, and `p`/`m` corresponds to a helicity of plus/minus 1 of circularly polarized light. For example, this can be used to describe a helicity-preserving mirror, and the model described in [Phys. Rev. A 107, L021501 (2021)](https://doi.org/10.1103/PhysRevA.107.L021501) is already provided in the code with a separate helper function `helicity_preserving_mirror(omegaPR,gammaPR,omega,enantiomer=False)` that returns the transfer matrix for a mirror with a helicity-preserving resonance at frequency `omegaPR` and with linewidth `gammaPR`, for frequencies `omega`. The `enantiomer` argument can be used to obtain the enantiomer (i.e., mirror image) version of the mirror, as necessary for creating a helicity-preserving cavity.
 
 The following example implements such a helicity-preserving cavity (corresponding to Fig. 3 of [Phys. Rev. A 107, L021501 (2021)](https://doi.org/10.1103/PhysRevA.107.L021501)):
 ```python

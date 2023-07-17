@@ -1,4 +1,4 @@
-import tscat as ts
+import transfermat_scatt as ts
 import numpy as np
 
 def eps_DL(omega, epsinf, omegap, omega0=0, gamma=0, kappa0=0):
