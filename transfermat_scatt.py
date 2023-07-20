@@ -37,11 +37,11 @@ def transfer_matrix(eps1, mu1, costhetas_1, eps2, mu2, costhetas_2):
     Mr = (et[...,None,None] + _par_tr) * (1 - _par_tr * ratiocos) / 4 # array of the reflection matrix
     return np.block([[Mt,Mr],[Mr,Mt]])
 
-def polarization_sums(x):
+def polarization_sums(x, Tfac=1):
     """for amplitudes with indices (...,pol_out,pol_in), sum probabilities over
     output polarization pol_out and return with input polarization pol_in as
     first index"""
-    return np.moveaxis(np.sum(abs(x)**2, axis=-2), -1, 0)
+    return np.moveaxis(np.sum(abs(x)**2, axis=-2) * Tfac, -1, 0)
 
 def calc_dct(Tp, Tm):
     """differential chiral transmission or reflection"""
@@ -131,13 +131,14 @@ class TScat:
         self.nsinthetas = layers[0].nps * np.sin(theta0[...,None]) + 0j
         for l in layers:
             l.set_costheta(self.nsinthetas)
+
         # according to Steven J. Byrnes (tmm author),
         # https://arxiv.org/abs/1603.02720, the prefactor should actually
         # contain costhetas.conj() for 'p' polarization (but not for 's'). Need
         # to check how/if this translates to the circular basis used here.
         # Correct way: Calculate Poynting vector for output fields which are
         # superpositions of the two circular polarizations
-        self.Tfac = np.sqrt((layers[-1].nps * layers[-1].costhetas).real / (layers[0].nps * layers[0].costhetas).real)
+        self.Tfac = (layers[-1].nps * layers[-1].costhetas).real / (layers[0].nps * layers[0].costhetas).real
 
         # phase propagation factors in each (interior) layer
         self.phas = [l.phase_matrix_diagonal(omega) for l in layers[1:-1]]
@@ -166,6 +167,7 @@ class TScat:
         self.rd = -tti @ trp  # reflection matrix for incidence from the right
         self.td = ttp + tr @ self.rd # transmission matrix for incidence from the right
 
+
     ###############################################################################################################
     # Member functions to access transmittance, reflectance, and DCT/DCR                                          #
     ###############################################################################################################
@@ -178,9 +180,9 @@ class TScat:
     ###############################################################################################################
 
     # internal helpers
-    _Ts = cached_property(lambda self: polarization_sums(self.ts*self.Tfac))
+    _Ts = cached_property(lambda self: polarization_sums(self.ts,self.Tfac))
     _Rs = cached_property(lambda self: polarization_sums(self.rs))
-    _Td = cached_property(lambda self: polarization_sums(self.td*self.Tfac))
+    _Td = cached_property(lambda self: polarization_sums(self.td,1/self.Tfac)) # scattering right-left has inverse Tfac
     _Rd = cached_property(lambda self: polarization_sums(self.rd))
 
     # external interface
@@ -199,9 +201,9 @@ class TScat:
     td_lin = cached_property(lambda self: circ_to_lin(self.td))
     rd_lin = cached_property(lambda self: circ_to_lin(self.rd))
 
-    _Ts_lin = cached_property(lambda self: polarization_sums(self.ts_lin*self.Tfac))
+    _Ts_lin = cached_property(lambda self: polarization_sums(self.ts_lin,self.Tfac))
     _Rs_lin = cached_property(lambda self: polarization_sums(self.rs_lin))
-    _Td_lin = cached_property(lambda self: polarization_sums(self.td_lin*self.Tfac))
+    _Td_lin = cached_property(lambda self: polarization_sums(self.td_lin,1/self.Tfac)) # scattering right-left has inverse Tfac
     _Rd_lin = cached_property(lambda self: polarization_sums(self.rd_lin))
 
     Ts_lin_p, Ts_lin_s = property(lambda self: self._Ts_lin[0]), property(lambda self: self._Ts_lin[1])
