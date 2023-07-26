@@ -70,8 +70,8 @@ class MaterialLayer(Layer):
         self.name = name
 
         # REFRACTIVE INDICES OF CHIRAL MEDIUM
-        npl = np.sqrt(self.eps*self.mu) * (1 + self.kappa)  # refractive index n+
-        npm = np.sqrt(self.eps*self.mu) * (1 - self.kappa)  # refractive index n-
+        npl = np.sqrt(self.eps*self.mu) + self.kappa  # refractive index n+
+        npm = np.sqrt(self.eps*self.mu) - self.kappa  # refractive index n-
         # nps has indices [input_indices..., polarization]
         self.nps = np.stack((npl,npm),axis=-1)
 
