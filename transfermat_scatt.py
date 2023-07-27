@@ -6,13 +6,20 @@ __version__ = '0.1.0'
 
 __all__ = ['MaterialLayer', 'TransferMatrixLayer', 'TScat', 'helicity_preserving_mirror']
 
+import os
 import numpy as np
 from functools import cached_property
+
+USE_WRONG_REFRACTIVE_INDEX = False
+if os.environ.get('TSCAT_USE_WRONG_REFRACTIVE_INDEX', '0') == '1':
+    USE_WRONG_REFRACTIVE_INDEX = True
 
 ###############################################################################################################
 # Helper functions                                                                                            #
 ###############################################################################################################
 
+# array of +1 and -1
+_pm1 = np.r_[1,-1]
 # matrix to change the sign of the matrix elements to fill correctly
 _par_tr = np.array([[1,-1],[-1,1]])
 # matrix to change from circular to linear polarization
@@ -70,10 +77,12 @@ class MaterialLayer(Layer):
         self.name = name
 
         # REFRACTIVE INDICES OF CHIRAL MEDIUM
-        npl = np.sqrt(self.eps*self.mu) + self.kappa  # refractive index n+
-        npm = np.sqrt(self.eps*self.mu) - self.kappa  # refractive index n-
-        # nps has indices [input_indices..., polarization]
-        self.nps = np.stack((npl,npm),axis=-1)
+        navg = np.sqrt(self.eps*self.mu)
+        # self.nps gets indices [input_indices..., polarization]
+        if USE_WRONG_REFRACTIVE_INDEX:
+            self.nps = navg[...,None] * (1 + _pm1 * self.kappa[...,None])
+        else:
+            self.nps = navg[...,None] + _pm1 * self.kappa[...,None]
 
     def set_costheta(self, nsinthetas):
         # use that cos(asin(x)) = sqrt(1-x**2)
