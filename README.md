@@ -105,7 +105,7 @@ vmax = abs(tScat.DCTs).max()
 plt.pcolormesh(d, lambda_vac, tScat.DCTs, cmap='coolwarm',
                vmin=-vmax, vmax=vmax, shading='gouraud')
 cb = plt.colorbar()
-cb.set_label('Differentia l Chiral Transmission left to right')
+cb.set_label('Differential Chiral Transmission left to right')
 plt.xlabel('Layer thickness (nm)')
 plt.ylabel('Vacuum wavelength (nm)')
 plt.tight_layout(pad=0.5)
