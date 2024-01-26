@@ -1,4 +1,4 @@
-import transfermat_scatt as ts
+import chiral_transfermatrix as ct
 import numpy as np
 
 def test_3():
@@ -13,13 +13,13 @@ def test_3():
 
     omegaPR = 2.0
     gammaPR = 0.05
-    mirror_1 = ts.helicity_preserving_mirror(omega,omegaPR,gammaPR,enantiomer=False)
-    mirror_2 = ts.helicity_preserving_mirror(omega,omegaPR,gammaPR,enantiomer=True)
-    air_infty  = ts.MaterialLayer(d=np.inf,eps=1)
-    air_cavity = ts.MaterialLayer(d=l,     eps=1)
+    mirror_1 = ct.helicity_preserving_mirror(omega,omegaPR,gammaPR,enantiomer=False)
+    mirror_2 = ct.helicity_preserving_mirror(omega,omegaPR,gammaPR,enantiomer=True)
+    air_infty  = ct.MaterialLayer(d=np.inf,eps=1)
+    air_cavity = ct.MaterialLayer(d=l,     eps=1)
     layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
 
-    tScat = ts.TScat(layers, lambda_vac, theta0)
+    tScat = ct.TScat(layers, lambda_vac, theta0)
 
     ampl = tScat.field_ampl(2, [1,0])  # field in cavity for an incoming LCP wave
 

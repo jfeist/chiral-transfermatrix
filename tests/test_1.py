@@ -1,4 +1,4 @@
-import transfermat_scatt as ts
+import chiral_transfermatrix as ct
 import numpy as np
 
 def eps_DL(omega, epsinf, omegap, omega0=0, gamma=0, kappa0=0):
@@ -20,12 +20,12 @@ def test_1():
 
     eps_met, k_met = eps_DL(omega, epsinf=4.77574276, omegap=9.48300763,   omega0=0,  gamma=0.17486845, kappa0=0)
     eps_mol, k_mol = eps_DL(omega, epsinf=2.89,       omegap=omegapChiral, omega0=2., gamma=0.05, kappa0=1e-3)
-    air_infty    = ts.MaterialLayer(d=np.inf, eps=1)
-    metal_mirror = ts.MaterialLayer(d=30,     eps=eps_met, kappa=k_met)
-    molecules    = ts.MaterialLayer(d=150,    eps=eps_mol, kappa=k_mol)
+    air_infty    = ct.MaterialLayer(d=np.inf, eps=1)
+    metal_mirror = ct.MaterialLayer(d=30,     eps=eps_met, kappa=k_met)
+    molecules    = ct.MaterialLayer(d=150,    eps=eps_mol, kappa=k_mol)
 
     layers = [air_infty, metal_mirror, molecules, metal_mirror, air_infty]
-    tScat = ts.TScat(layers, lambda_vac, theta0)
+    tScat = ct.TScat(layers, lambda_vac, theta0)
 
     # np.savez_compressed('tests/test_1.npz', ts=tScat.ts, rs=tScat.rs, td=tScat.td, rd=tScat.rd)
     ref_data = np.load('tests/test_1.npz')
