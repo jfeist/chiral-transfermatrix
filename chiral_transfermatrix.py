@@ -6,13 +6,8 @@ __version__ = '0.1.0'
 
 __all__ = ['MaterialLayer', 'TransferMatrixLayer', 'TScat', 'helicity_preserving_mirror']
 
-import os
 import numpy as np
 from functools import cached_property
-
-USE_WRONG_REFRACTIVE_INDEX = False
-if os.environ.get('TSCAT_USE_WRONG_REFRACTIVE_INDEX', '0') == '1':
-    USE_WRONG_REFRACTIVE_INDEX = True
 
 ###############################################################################################################
 # Helper functions                                                                                            #
@@ -79,10 +74,7 @@ class MaterialLayer(Layer):
         # REFRACTIVE INDICES OF CHIRAL MEDIUM
         navg = np.sqrt(self.eps*self.mu)
         # self.nps gets indices [input_indices..., polarization]
-        if USE_WRONG_REFRACTIVE_INDEX:
-            self.nps = navg[...,None] * (1 + _pm1 * self.kappa[...,None])
-        else:
-            self.nps = navg[...,None] + _pm1 * self.kappa[...,None]
+        self.nps = navg[...,None] + _pm1 * self.kappa[...,None]
 
     def set_costheta(self, nsinthetas):
         # use that cos(asin(x)) = sqrt(1-x**2)
