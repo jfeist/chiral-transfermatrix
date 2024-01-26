@@ -6,7 +6,8 @@ def test_3():
     # (i.e., output should be 2x600x500),
     # so make the arrays to get this with broadcasting - index order is then
     # itheta0, iomegap, iomega
-    omega = np.linspace(1.8, 2.2, 30)
+    omega = np.linspace(1.8, 2.2, 30) # omega in eV
+    lambda_vac = 1239.8419843320028 / omega # lambda in nm, "magic" constant is hc in eV*nm
     l = np.linspace(150, 450, 20)[:,None]
     theta0 = np.r_[0, 0.231][:,None,None]
 
@@ -18,7 +19,7 @@ def test_3():
     air_cavity = ts.MaterialLayer(d=l,     eps=1)
     layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
 
-    tScat = ts.TScat(layers, omega, theta0)
+    tScat = ts.TScat(layers, lambda_vac, theta0)
 
     ampl = tScat.field_ampl(2, [1,0])  # field in cavity for an incoming LCP wave
 

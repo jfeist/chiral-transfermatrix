@@ -89,13 +89,11 @@ class MaterialLayer(Layer):
         # costhetas has indices [input_indices..., polarization]
         self.costhetas = np.sqrt(1 - (nsinthetas / self.nps)**2)
 
-    def phase_matrix_diagonal(self, omega, d=None):
+    def phase_matrix_diagonal(self, k0, d=None):
         """propagation phases across layer (diagonal of a diagonal matrix)"""
-        # constant is 1/ħc in units of 1/(eV nm), which converts
-        # from omega in eV (i.e., it is really ħω) to k in nm^-1
         if d is None:
             d = self.d
-        kd = 0.005067730716156395 * omega * d
+        kd = k0 * d
         phis = kd[...,None] * self.nps * self.costhetas
         phil = np.concatenate((-phis, phis), axis=-1)  # array of phases
         return np.exp(1j*phil)
@@ -117,7 +115,7 @@ class TransferMatrixLayer(Layer):
     def set_costheta(self, nsinthetas):
         self.costhetas = np.sqrt(1 - nsinthetas**2)
 
-    def phase_matrix_diagonal(self, omega, d=None):
+    def phase_matrix_diagonal(self, k0, d=None):
         return np.ones(self.M.shape[:-1])
 
     def transfer_matrix(self, prev):
@@ -128,12 +126,13 @@ class TransferMatrixLayer(Layer):
 ###############################################################################################################
 class TScat:
     """A multilayer made of a sequence of layers. Calculates the scattering properties upon instantiation."""
-    def __init__(self, layers, omega, theta0):
-        omega = np.atleast_1d(omega)
+    def __init__(self, layers, lambda_vac, theta0):
+        lambda_vac = np.atleast_1d(lambda_vac)
         theta0 = np.atleast_1d(theta0)
 
         self.layers = layers
-        self.omega = omega
+        self.lambda_vac = lambda_vac
+        self.k0 = 2*np.pi / lambda_vac
         self.theta0 = theta0
 
         # Snell's law means that n*sin(theta) is conserved, these are the incoming values
@@ -150,7 +149,7 @@ class TScat:
         self.Tfac = (layers[-1].nps * layers[-1].costhetas).real / (layers[0].nps * layers[0].costhetas).real
 
         # phase propagation factors in each (interior) layer
-        self.phas = [l.phase_matrix_diagonal(omega) for l in layers[1:-1]]
+        self.phas = [l.phase_matrix_diagonal(self.k0) for l in layers[1:-1]]
 
         # transfer matrices at the interfaces between layers
         self.M12 = [l2.transfer_matrix(l1) for l1,l2 in zip(layers, layers[1:])]

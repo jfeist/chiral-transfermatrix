@@ -14,6 +14,7 @@ def test_2():
     # so make the arrays to get this with broadcasting - index order is then
     # itheta0, iomegap, iomega
     omega = np.linspace(1.6, 2.4, 30) # omega in eV
+    lambda_vac = 1239.8419843320028 / omega # lambda in nm, "magic" constant is hc in eV*nm
     omegapChiral = np.linspace(0.0, 1.0, 20)[:,None]
     theta0 = np.r_[0, 0.231][:,None,None]
 
@@ -28,7 +29,7 @@ def test_2():
     molecules = ts.MaterialLayer(d=180.,   eps=eps_mol, kappa=k_mol)
 
     layers = [air_infty, mirror_1, air_thin, molecules, air_thin, mirror_2, air_infty]
-    tScat = ts.TScat(layers, omega, theta0)
+    tScat = ts.TScat(layers, lambda_vac, theta0)
 
     # np.savez_compressed('tests/test_2.npz', ts=tScat.ts, rs=tScat.rs, td=tScat.td, rd=tScat.rd)
     ref_data = np.load('tests/test_2.npz')
