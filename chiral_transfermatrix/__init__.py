@@ -1,4 +1,5 @@
-"""tscat is a transfer/scattering matrix package for achiral and chiral multilayers
+"""chiral-transfermatrix is a transfer/scattering matrix package for calculating
+the optical response of achiral and chiral multilayer structures.
 
 authors: Lorenzo Mauro, Jacopo Fregoni, Remi Avriller, and Johannes Feist"""
 
