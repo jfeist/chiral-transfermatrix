@@ -29,7 +29,7 @@ def test_2():
     molecules = ct.MaterialLayer(d=180.,   eps=eps_mol, kappa=k_mol)
 
     layers = [air_infty, mirror_1, air_thin, molecules, air_thin, mirror_2, air_infty]
-    tScat = ct.TScat(layers, lambda_vac, theta0)
+    tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 
     # np.savez_compressed('tests/test_2.npz', ts=tScat.ts, rs=tScat.rs, td=tScat.td, rd=tScat.rd)
     ref_data = np.load('tests/test_2.npz')

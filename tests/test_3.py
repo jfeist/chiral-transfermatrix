@@ -19,7 +19,7 @@ def test_3():
     air_cavity = ct.MaterialLayer(d=l,     eps=1)
     layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
 
-    tScat = ct.TScat(layers, lambda_vac, theta0)
+    tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 
     ampl = tScat.field_ampl(2, [1,0])  # field in cavity for an incoming LCP wave
 

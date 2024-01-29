@@ -25,7 +25,7 @@ dielectric = ct.MaterialLayer(d=100., eps=2.25, kappa=0, mu=1)
 layers = [air_infty, dielectric, air_infty]
 lambda_vac = [800, 1200, 2400]
 theta0 = 0.1*np.pi
-tScat = ct.TScat(layers, lambda_vac, theta0)
+tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 ```
 
 Here, the elements of `layers` can be either:
@@ -37,7 +37,7 @@ Here, the elements of `layers` can be either:
 - `TransferMatrixLayer` objects representing an arbitrary optical element defined by its transfer matrix (assumed to be calculated/modeled externally), and constructed with a single argument:
     - `M`: 4x4 transfer matrix of the optical element.
 
-The "main" class is `TScat`, which calculates the scattering properties of the structure upon instantiation and takes the following arguments:
+The "main" class is `MultiLayerScatt`, which calculates the scattering properties of the structure upon instantiation and takes the following arguments:
 - `layers`: list describing the layers of the structure
 - `lambda_vac`: vacuum wavelength (in the same units as `d` above)
 - `theta0`: incidence angle (in radians)
@@ -67,7 +67,7 @@ The full scattering amplitudes (and not just probabilities) are also available:
 which gives the transmission/reflection (`t`/`r`) amplitudes from left to right/right to left (`s`/`d`). In the example above, these are `3×2×2` arrays, where the first index is the frequency, the second is the output polarization (in order `p`/`m`), and the third is the input polarization (same order). Since the amplitudes are not diagonal in polarization, this output is always in matrix form (the probabilities with capital letters above are summed over the output polarization).
 
 ## Parameter scans
-Importantly, the `TScat` interface is written to follow the [numpy broadcasting conventions](https://numpy.org/doc/stable/user/basics.broadcasting.html), so that scanning over any desired combination of parameters is easy:
+Importantly, the `MultiLayerScatt` interface is written to follow the [numpy broadcasting conventions](https://numpy.org/doc/stable/user/basics.broadcasting.html), so that scanning over any desired combination of parameters is easy:
 ```python
 # we want to scan over layer thickness d AND vacuum wavelength lambda_vac
 # so make them a 51-element 1D and a 101x1 2D array, respectively,
@@ -79,7 +79,7 @@ air_infty = ct.MaterialLayer(d=np.inf, eps=1)
 dielectric = ct.MaterialLayer(d=d, eps=2.25)
 layers = [air_infty, dielectric, air_infty]
 theta0 = 0.3
-tScat = ct.TScat(layers, lambda_vac, theta0)
+tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 
 plt.pcolormesh(d, lambda_vac, tScat.Tsp, cmap='turbo', shading='gouraud')
 plt.colorbar()
@@ -99,7 +99,7 @@ air_infty = ct.MaterialLayer(d=np.inf, eps=1)
 dielectric = ct.MaterialLayer(d=d, eps=2.25, kappa=1e-3)
 layers = [air_infty, dielectric, air_infty]
 theta0 = 0.3
-tScat = ct.TScat(layers, lambda_vac, theta0)
+tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 
 vmax = abs(tScat.DCTs).max()
 plt.pcolormesh(d, lambda_vac, tScat.DCTs, cmap='coolwarm',
@@ -128,7 +128,7 @@ mirror_2 = ct.helicity_preserving_mirror(omega,omegaPR=2,gammaPR=0.05,enantiomer
 air_infty = ct.MaterialLayer(d=np.inf, eps=1)
 air_cav = ct.MaterialLayer(d=L, eps=1)
 layers = [air_infty, mirror_1, air_cav, mirror_2, air_infty]
-tScat = ct.TScat(layers, lambda_vac, theta0=0.)
+tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0=0.)
 
 plt.pcolormesh(L, omega, tScat.DCTs, cmap='seismic', vmin=-2, vmax=2, shading='gouraud')
 cb = plt.colorbar()

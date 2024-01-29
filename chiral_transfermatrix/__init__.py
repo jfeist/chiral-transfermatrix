@@ -5,7 +5,7 @@ authors: Lorenzo Mauro, Jacopo Fregoni, Remi Avriller, and Johannes Feist"""
 
 __version__ = '0.1.0'
 
-__all__ = ['MaterialLayer', 'TransferMatrixLayer', 'TScat', 'helicity_preserving_mirror']
+__all__ = ['MaterialLayer', 'TransferMatrixLayer', 'MultiLayerScatt', 'helicity_preserving_mirror']
 
 import numpy as np
 from functools import cached_property
@@ -117,7 +117,7 @@ class TransferMatrixLayer(Layer):
 ###############################################################################################################
 # Main class                                                                                                  #
 ###############################################################################################################
-class TScat:
+class MultiLayerScatt:
     """A multilayer made of a sequence of layers. Calculates the scattering properties upon instantiation."""
     def __init__(self, layers, lambda_vac, theta0):
         lambda_vac = np.atleast_1d(lambda_vac)
