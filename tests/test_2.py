@@ -29,9 +29,9 @@ def test_2():
     molecules = ct.MaterialLayer(d=180.,   eps=eps_mol, kappa=k_mol)
 
     layers = [air_infty, mirror_1, air_thin, molecules, air_thin, mirror_2, air_infty]
-    tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0)
+    mls = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 
-    # np.savez_compressed('tests/test_2.npz', ts=tScat.ts, rs=tScat.rs, td=tScat.td, rd=tScat.rd)
+    # np.savez_compressed('tests/test_2.npz', ts=mls.ts, rs=tScat.rs, td=tScat.td, rd=tScat.rd)
     ref_data = np.load('tests/test_2.npz')
     for k,dat in ref_data.items():
-        assert np.allclose(dat, getattr(tScat,k))
+        assert np.allclose(dat, getattr(mls,k))

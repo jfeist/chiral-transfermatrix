@@ -25,7 +25,7 @@ dielectric = ct.MaterialLayer(d=100., eps=2.25, kappa=0, mu=1)
 layers = [air_infty, dielectric, air_infty]
 lambda_vac = [800, 1200, 2400]
 theta0 = 0.1*np.pi
-tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0)
+mls = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 ```
 
 Here, the elements of `layers` can be either:
@@ -42,9 +42,9 @@ The "main" class is `MultiLayerScatt`, which calculates the scattering propertie
 - `lambda_vac`: vacuum wavelength (in the same units as `d` above)
 - `theta0`: incidence angle (in radians)
 
-The scattering properties can then be accessed as attributes of the returned object `tScat`, e.g.:
+The scattering properties can then be accessed as attributes of the returned object `mls`, e.g.:
 ```python
-> print(tScat.Tsp)
+> print(mls.Tsp)
 [0.87296771 0.92228172 0.97604734]
 ```
 Here, `Tsp` is the transmission (`T`) probability from left to right (`s`) for positively circular polarized light (`p`) at the three frequencies. The eight available scattering probabilities are: `Tsp`, `Tsm`, `Tdp`, `Tdm`, `Rsp`, `Rsm`, `Rdp`, `Rdm`, where the letters stand for:
@@ -54,7 +54,7 @@ Here, `Tsp` is the transmission (`T`) probability from left to right (`s`) for p
 
 The full scattering amplitudes (and not just probabilities) are also available:
 ```python
-> print(tScat.ts)
+> print(mls.ts)
 [[[0.35434266+8.64476289e-01j 0.0066483 +6.74822883e-03j]
   [0.0066483 +6.74822883e-03j 0.35434266+8.64476289e-01j]]
 
@@ -79,9 +79,9 @@ air_infty = ct.MaterialLayer(d=np.inf, eps=1)
 dielectric = ct.MaterialLayer(d=d, eps=2.25)
 layers = [air_infty, dielectric, air_infty]
 theta0 = 0.3
-tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0)
+mls = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 
-plt.pcolormesh(d, lambda_vac, tScat.Tsp, cmap='turbo', shading='gouraud')
+plt.pcolormesh(d, lambda_vac, mls.Tsp, cmap='turbo', shading='gouraud')
 plt.colorbar()
 plt.xlabel('Layer thickness (nm)')
 plt.ylabel('Vacuum wavelength (nm)')
@@ -99,10 +99,10 @@ air_infty = ct.MaterialLayer(d=np.inf, eps=1)
 dielectric = ct.MaterialLayer(d=d, eps=2.25, kappa=1e-3)
 layers = [air_infty, dielectric, air_infty]
 theta0 = 0.3
-tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0)
+mls = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 
-vmax = abs(tScat.DCTs).max()
-plt.pcolormesh(d, lambda_vac, tScat.DCTs, cmap='coolwarm',
+vmax = abs(mls.DCTs).max()
+plt.pcolormesh(d, lambda_vac, mls.DCTs, cmap='coolwarm',
                vmin=-vmax, vmax=vmax, shading='gouraud')
 cb = plt.colorbar()
 cb.set_label('Differential Chiral Transmission left to right')
@@ -128,9 +128,9 @@ mirror_2 = ct.helicity_preserving_mirror(omega,omegaPR=2,gammaPR=0.05,enantiomer
 air_infty = ct.MaterialLayer(d=np.inf, eps=1)
 air_cav = ct.MaterialLayer(d=L, eps=1)
 layers = [air_infty, mirror_1, air_cav, mirror_2, air_infty]
-tScat = ct.MultiLayerScatt(layers, lambda_vac, theta0=0.)
+mls = ct.MultiLayerScatt(layers, lambda_vac, theta0=0.)
 
-plt.pcolormesh(L, omega, tScat.DCTs, cmap='seismic', vmin=-2, vmax=2, shading='gouraud')
+plt.pcolormesh(L, omega, mls.DCTs, cmap='seismic', vmin=-2, vmax=2, shading='gouraud')
 cb = plt.colorbar()
 cb.set_label('Differential Chiral Transmission left to right')
 plt.xlabel(r'$L$ (nm)')
