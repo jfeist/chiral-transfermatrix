@@ -87,7 +87,7 @@ plt.xlabel('Layer thickness (nm)')
 plt.ylabel('Vacuum wavelength (nm)')
 plt.tight_layout(pad=0.5)
 ```
-<img src="figs/thickness_scan_Tsp.png" width="480" alt="thickness scan">
+<img src="https://raw.githubusercontent.com/jfeist/chiral-transfermatrix/main/figs/thickness_scan_Tsp.png" width="480" alt="thickness scan">
 
 ## Chiral materials
 We now make the dielectric material chiral, with Pasteur chirality parameter `kappa=1e-3`. Since this is small, the transmission for left- and right-circular polarized light are visually indistinguishable, and we instead plot the differential chiral transmission DCT = 2(Tp - Tm)/(Tp + Tm):
@@ -110,7 +110,7 @@ plt.xlabel('Layer thickness (nm)')
 plt.ylabel('Vacuum wavelength (nm)')
 plt.tight_layout(pad=0.5)
 ```
-<img src="figs/thickness_scan_DCT.png" width="480" alt="thickness scan DCT">
+<img src="https://raw.githubusercontent.com/jfeist/chiral-transfermatrix/main/figs/thickness_scan_DCT.png" width="480" alt="thickness scan DCT">
 
 ## Arbitrary layers defined by their transfer matrix
 
@@ -141,7 +141,7 @@ Lcut = lambda_vac.squeeze() / 2
 plt.plot(Lcut,omega.squeeze(),'k--',lw=1)
 plt.tight_layout(pad=0.5)
 ```
-<img src="figs/HPcav_thickness_scan_DCT.png" width="480" alt="HP cavity thickness scan DCT">
+<img src="https://raw.githubusercontent.com/jfeist/chiral-transfermatrix/main/figs/HPcav_thickness_scan_DCT.png" width="480" alt="HP cavity thickness scan DCT">
 
 # Example notebooks
 In the "examples" directory, there are two Jupyter notebooks that show how to use `chiral-transfermatrix` to reproduce the results published in [Phys. Rev. A 108, 069902 (2023)](https://doi.org/10.1103/PhysRevA.108.069902) (the erratum for [Phys. Rev. A 107, L021501 (2023)](https://doi.org/10.1103/PhysRevA.107.L021501)), and in [arXiv:2304.12140](https://doi.org/10.48550/arXiv.2304.12140).
