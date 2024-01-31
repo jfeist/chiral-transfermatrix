@@ -4,13 +4,14 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "chiral-transfermatrix"
-authors = [{name = "Lorenzo Mauro"},
+authors = [{name = "Johannes Feist", email = "johannes.feist@gmail.com"},
+           {name = "Lorenzo Mauro"},
            {name = "Jacopo Fregoni"},
-           {name = "Remi Avriller"},
-           {name = "Johannes Feist", email = "johannes.feist@gmail.com"}]
+           {name = "Remi Avriller"}]
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version", "description"]
+readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "numpy >=1.15",

@@ -1,9 +1,8 @@
-"""chiral-transfermatrix is a transfer/scattering matrix package for calculating
-the optical response of achiral and chiral multilayer structures.
+"""chiral-transfermatrix is a transfer/scattering matrix package for calculating the optical response of achiral and chiral multilayer structures.
 
 authors: Lorenzo Mauro, Jacopo Fregoni, Remi Avriller, and Johannes Feist"""
 
-__version__ = '0.1.0'
+__version__ = '0.1.0.post1'
 
 __all__ = ['MaterialLayer', 'TransferMatrixLayer', 'MultiLayerScatt', 'helicity_preserving_mirror']
 
