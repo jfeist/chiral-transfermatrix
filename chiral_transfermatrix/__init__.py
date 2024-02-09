@@ -2,7 +2,7 @@
 
 authors: Lorenzo Mauro, Jacopo Fregoni, Remi Avriller, and Johannes Feist"""
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 __all__ = ['MaterialLayer', 'TransferMatrixLayer', 'MultiLayerScatt', 'helicity_preserving_mirror']
 
@@ -209,7 +209,7 @@ class MultiLayerScatt:
     Ts_lin_p, Ts_lin_s = property(lambda self: self._Ts_lin[0]), property(lambda self: self._Ts_lin[1])
     Rs_lin_p, Rs_lin_s = property(lambda self: self._Rs_lin[0]), property(lambda self: self._Rs_lin[1])
     Td_lin_p, Td_lin_s = property(lambda self: self._Td_lin[0]), property(lambda self: self._Td_lin[1])
-    Rd_lin_p, Td_lin_s = property(lambda self: self._Rd_lin[0]), property(lambda self: self._Rd_lin[1])
+    Rd_lin_p, Rd_lin_s = property(lambda self: self._Rd_lin[0]), property(lambda self: self._Rd_lin[1])
 
     def field_ampl(self, ilayer, cinc):
         """Computes the amplitudes of the fields in a given layer (at the
