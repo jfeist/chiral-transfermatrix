@@ -129,8 +129,8 @@ class MultiLayerScatt:
 
         # Snell's law means that n*sin(theta) is conserved, these are the incoming values
         self.nsinthetas = layers[0].nps * np.sin(theta0[...,None]) + 0j
-        for l in layers:
-            l.set_costheta(self.nsinthetas)
+        for layer in layers:
+            layer.set_costheta(self.nsinthetas)
 
         # according to Steven J. Byrnes (tmm author),
         # https://arxiv.org/abs/1603.02720, the prefactor should actually
@@ -141,7 +141,7 @@ class MultiLayerScatt:
         self.Tfac = (layers[-1].nps * layers[-1].costhetas).real / (layers[0].nps * layers[0].costhetas).real
 
         # phase propagation factors in each (interior) layer
-        self.phas = [l.phase_matrix_diagonal(self.k0) for l in layers[1:-1]]
+        self.phas = [layer.phase_matrix_diagonal(self.k0) for layer in layers[1:-1]]
 
         # transfer matrices at the interfaces between layers
         self.M12 = [l2.transfer_matrix(l1) for l1,l2 in zip(layers, layers[1:])]
@@ -216,8 +216,9 @@ class MultiLayerScatt:
         right end), given the amplitudes of the incoming fields from the
         left."""
 
-        # matrix-vector multiplication for arrays of matrices and vectors
-        matvec_mul = lambda A,v: np.einsum('...ij,...j->...i', A, v)
+        def matvec_mul(A,v):
+            "matrix-vector multiplication for arrays of matrices and vectors"
+            return np.einsum('...ij,...j->...i', A, v)
 
         # get coefficients on the right for input from the left
         # this is just the transmitted field, there is no incoming field from the right

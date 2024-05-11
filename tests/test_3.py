@@ -8,7 +8,7 @@ def test_3():
     # itheta0, iomegap, iomega
     omega = np.linspace(1.8, 2.2, 30) # omega in eV
     lambda_vac = 1239.8419843320028 / omega # lambda in nm, "magic" constant is hc in eV*nm
-    l = np.linspace(150, 450, 20)[:,None]
+    ls = np.linspace(150, 450, 20)[:,None]
     theta0 = np.r_[0, 0.231][:,None,None]
 
     omegaPR = 2.0
@@ -16,7 +16,7 @@ def test_3():
     mirror_1 = ct.helicity_preserving_mirror(omega,omegaPR,gammaPR,enantiomer=False)
     mirror_2 = ct.helicity_preserving_mirror(omega,omegaPR,gammaPR,enantiomer=True)
     air_infty  = ct.MaterialLayer(d=np.inf,eps=1)
-    air_cavity = ct.MaterialLayer(d=l,     eps=1)
+    air_cavity = ct.MaterialLayer(d=ls,    eps=1)
     layers = [air_infty, mirror_1, air_cavity, mirror_2, air_infty]
 
     mls = ct.MultiLayerScatt(layers, lambda_vac, theta0)
