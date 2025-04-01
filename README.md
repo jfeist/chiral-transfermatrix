@@ -144,7 +144,7 @@ plt.tight_layout(pad=0.5)
 <img src="https://raw.githubusercontent.com/jfeist/chiral-transfermatrix/main/figs/HPcav_thickness_scan_DCT.png" width="480" alt="HP cavity thickness scan DCT">
 
 # Example notebooks
-In the "examples" directory, there are two Jupyter notebooks that show how to use `chiral-transfermatrix` to reproduce the results published in [Phys. Rev. A 108, 069902 (2023)](https://doi.org/10.1103/PhysRevA.108.069902) (the erratum for [Phys. Rev. A 107, L021501 (2023)](https://doi.org/10.1103/PhysRevA.107.L021501)), and in [arXiv:2304.12140](https://doi.org/10.48550/arXiv.2304.12140).
+In the "examples" directory, there are two Jupyter notebooks that show how to use `chiral-transfermatrix` to reproduce the results published in [Phys. Rev. A 108, 069902 (2023)](https://doi.org/10.1103/PhysRevA.108.069902) (the erratum for [Phys. Rev. A 107, L021501 (2023)](https://doi.org/10.1103/PhysRevA.107.L021501)), and in [Phys. Rev. A 109, 023528 (2024)](https://doi.org/10.1103/PhysRevA.109.023528).
 
 # To do
 - add example with field amplitudes
