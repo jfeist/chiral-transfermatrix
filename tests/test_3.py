@@ -2,7 +2,7 @@ import chiral_transfermatrix as ct
 import numpy as np
 
 
-def test_3():
+def test_3(ndarrays_regression):
     # we want to scan over the angle theta0, cavity length l, and frequency omega
     # (i.e., output should be 2x600x500),
     # so make the arrays to get this with broadcasting - index order is then
@@ -24,6 +24,5 @@ def test_3():
 
     ampl = mls.field_ampl(2, [1, 0])  # field in cavity for an incoming LCP wave
 
-    # np.savez_compressed("tests/test_3.npz", ampl=ampl)
-    ref_data = np.load("tests/test_3.npz")
-    assert np.allclose(ref_data["ampl"], ampl)
+    ref_data = dict(ampl=ampl)
+    ndarrays_regression.check(ref_data)

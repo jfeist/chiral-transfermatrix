@@ -10,7 +10,7 @@ def eps_DL(omega, epsinf, omegap, omega0=0, gamma=0, kappa0=0):
     return eps, k
 
 
-def test_2():
+def test_2(ndarrays_regression):
     # we want to scan over the angle theta0, the resonance strength
     # omegapChiral, and the frequency omega (i.e., output should be 2x100x100),
     # so make the arrays to get this with broadcasting - index order is then
@@ -33,7 +33,5 @@ def test_2():
     layers = [air_infty, mirror_1, air_thin, molecules, air_thin, mirror_2, air_infty]
     mls = ct.MultiLayerScatt(layers, lambda_vac, theta0)
 
-    # np.savez_compressed('tests/test_2.npz', ts=mls.ts, rs=tScat.rs, td=tScat.td, rd=tScat.rd)
-    ref_data = np.load("tests/test_2.npz")
-    for k, dat in ref_data.items():
-        assert np.allclose(dat, getattr(mls, k))
+    ref_data = dict(ts=mls.ts, rs=mls.rs, td=mls.td, rd=mls.rd)
+    ndarrays_regression.check(ref_data)

@@ -23,6 +23,7 @@ Home = "https://github.com/jfeist/chiral-transfermatrix"
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",
+    "pytest-regressions>=2.6.0",
     "ruff>=0.11.2",
 ]
 
